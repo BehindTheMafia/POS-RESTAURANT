@@ -1,62 +1,70 @@
-import { NavLink, useNavigate } from 'react-router';
+import { NavLink, useNavigate } from 'react-router'
 import {
   LayoutDashboard, UtensilsCrossed, CreditCard, Package,
   FlaskConical, BarChart3, Users, Settings, ScrollText,
   LogOut, Flame, ChevronRight, X
-} from 'lucide-react';
-import { useStore } from '../../store';
-import { motion } from 'motion/react';
+} from 'lucide-react'
+import { useAuthContext } from '../../AuthContext'
+import { motion } from 'motion/react'
 
 interface NavItem {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  roles: string[];
+  to: string
+  icon: React.ReactNode
+  label: string
+  permission: string
 }
 
 const navItems: NavItem[] = [
-  { to: '/dashboard',     icon: <LayoutDashboard size={18} />, label: 'Dashboard',      roles: ['admin'] },
-  { to: '/pos',           icon: <UtensilsCrossed size={18} />, label: 'Mesas / POS',    roles: ['admin', 'cashier', 'waiter'] },
-  { to: '/caja',          icon: <CreditCard size={18} />,      label: 'Caja',           roles: ['admin', 'cashier'] },
-  { to: '/productos',     icon: <Package size={18} />,         label: 'Productos',      roles: ['admin'] },
-  { to: '/inventario',    icon: <FlaskConical size={18} />,    label: 'Inventario',     roles: ['admin'] },
-  { to: '/reportes',      icon: <BarChart3 size={18} />,       label: 'Reportes',       roles: ['admin', 'cashier'] },
-  { to: '/usuarios',      icon: <Users size={18} />,           label: 'Usuarios',       roles: ['admin'] },
-  { to: '/configuracion', icon: <Settings size={18} />,        label: 'Configuración',  roles: ['admin'] },
-  { to: '/auditoria',     icon: <ScrollText size={18} />,      label: 'Auditoría',      roles: ['admin'] },
-];
+  { to: '/dashboard',     icon: <LayoutDashboard size={18} />, label: 'Dashboard',      permission: 'dashboard.view' },
+  { to: '/pos',           icon: <UtensilsCrossed size={18} />, label: 'Mesas / POS',    permission: 'pos.view' },
+  { to: '/caja',          icon: <CreditCard size={18} />,      label: 'Caja',           permission: 'cash.manage' },
+  { to: '/productos',     icon: <Package size={18} />,         label: 'Productos',      permission: 'products.manage' },
+  { to: '/inventario',    icon: <FlaskConical size={18} />,    label: 'Inventario',     permission: 'inventory.view' },
+  { to: '/reportes',      icon: <BarChart3 size={18} />,       label: 'Reportes',       permission: 'reports.view' },
+  { to: '/usuarios',      icon: <Users size={18} />,           label: 'Usuarios',       permission: 'users.manage' },
+  { to: '/configuracion', icon: <Settings size={18} />,        label: 'Configuración',  permission: 'settings.manage' },
+  { to: '/auditoria',     icon: <ScrollText size={18} />,      label: 'Auditoría',      permission: 'audit.view' },
+]
 
 interface SidebarProps {
-  onClose: () => void;
+  onClose: () => void
 }
 
 export function Sidebar({ onClose }: SidebarProps) {
-  const { state, dispatch } = useStore();
-  const navigate = useNavigate();
-  const role = state.currentUser?.role ?? 'waiter';
-  const visible = navItems.filter(i => i.roles.includes(role));
+  const { user, signOut, hasPermission } = useAuthContext()
+  const navigate = useNavigate()
 
-  function handleLogout() {
-    dispatch({ type: 'LOGOUT' });
-    onClose();
-    navigate('/login');
+  const visible = navItems.filter(i => hasPermission(i.permission))
+
+  async function handleLogout() {
+    await signOut()
+    onClose()
+    navigate('/login')
   }
 
-  return (
-    <aside className="flex flex-col h-full w-64 bg-[#0F0F1A] text-white select-none shadow-2xl">
+  const initials = user?.profile?.nombre
+    ? user.profile.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : '??'
 
-      {/* Logo + close button */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 shrink-0">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FF5A1F' }}>
-          <Flame size={18} color="white" />
+  const roleLabel =
+    user?.roleName === 'admin' ? 'Administrador'
+    : user?.roleName === 'cajero' ? 'Cajero'
+    : 'Mesero'
+
+  return (
+    <aside className="flex flex-col h-full w-64 bg-sidebar text-sidebar-foreground select-none shadow-2xl">
+      {/* Logo + close */}
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center shrink-0">
+          <Flame size={18} className="text-brand-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-white leading-none" style={{ fontSize: '15px', fontWeight: 700 }}>Prime Wings</p>
-          <p className="text-white/40 leading-none mt-0.5" style={{ fontSize: '11px' }}>POS System</p>
+          <p className="text-sidebar-foreground leading-none" style={{ fontSize: '15px', fontWeight: 700 }}>POS Restaurant</p>
+          <p className="text-sidebar-foreground/40 leading-none mt-0.5" style={{ fontSize: '11px' }}>Sistema POS</p>
         </div>
         <button
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/10 transition-colors shrink-0"
         >
           <X size={16} />
         </button>
@@ -70,10 +78,10 @@ export function Sidebar({ onClose }: SidebarProps) {
             to={item.to}
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 relative ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative min-h-11 cursor-pointer ${
                 isActive
-                  ? 'bg-[#FF5A1F]/15 text-[#FF5A1F]'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                  ? 'bg-sidebar-accent text-brand'
+                  : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/8'
               }`
             }
           >
@@ -82,13 +90,13 @@ export function Sidebar({ onClose }: SidebarProps) {
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active"
-                    className="absolute inset-0 rounded-lg bg-[#FF5A1F]/15"
+                    className="absolute inset-0 rounded-lg bg-sidebar-accent"
                     style={{ zIndex: 0 }}
                   />
                 )}
                 <span className="relative z-10 shrink-0">{item.icon}</span>
                 <span className="relative z-10 text-sm flex-1">{item.label}</span>
-                {isActive && <ChevronRight size={14} className="relative z-10 text-[#FF5A1F] shrink-0" />}
+                {isActive && <ChevronRight size={14} className="relative z-10 text-brand shrink-0" />}
               </>
             )}
           </NavLink>
@@ -96,29 +104,24 @@ export function Sidebar({ onClose }: SidebarProps) {
       </nav>
 
       {/* User + logout */}
-      <div className="px-3 pb-4 border-t border-white/10 pt-4 shrink-0">
+      <div className="px-3 pb-4 border-t border-sidebar-border pt-4 shrink-0">
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg mb-1">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-            style={{ background: '#FF5A1F' }}>
-            {state.currentUser?.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-brand-foreground text-xs font-bold shrink-0">
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm truncate leading-none">{state.currentUser?.name}</p>
-            <p className="text-white/40 text-xs mt-0.5 capitalize">
-              {state.currentUser?.role === 'admin' ? 'Administrador'
-                : state.currentUser?.role === 'cashier' ? 'Cajero'
-                : 'Mesero'}
-            </p>
+            <p className="text-sidebar-foreground text-sm truncate leading-none">{user?.profile?.nombre ?? 'Usuario'}</p>
+            <p className="text-sidebar-foreground/40 text-xs mt-0.5">{roleLabel}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-all text-sm"
+          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/8 transition-all duration-200 text-sm cursor-pointer min-h-11"
         >
           <LogOut size={15} className="shrink-0" />
           Cerrar sesión
         </button>
       </div>
     </aside>
-  );
+  )
 }

@@ -1,204 +1,325 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Lock, Unlock, DollarSign, TrendingUp, TrendingDown, Plus, X, Check } from 'lucide-react';
-import { useStore, addAuditLog } from '../store';
-import type { CashRegisterSession, CashMovement } from '../types';
-
-function fmt(n: number) {
-  return `C$${(n ?? 0).toLocaleString('es-NI', { minimumFractionDigits: 0 })}`;
-}
+import React, { useState, type FormEvent } from 'react';
+import { motion } from 'motion/react';
+import { CreditCard, Plus, Minus, DollarSign, RefreshCw, History, Lock, Unlock } from 'lucide-react';
+import { useCashRegister } from '../../hooks/useCashRegister';
+import { useAuthContext } from '../AuthContext';
+import { useRestaurant } from '../../hooks/useRestaurant';
+import { toast } from 'sonner';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/button';
+import { ConfirmDialog, type ConfirmDialogState } from '../components/ui/ConfirmDialog';
 
 export function CashRegister() {
-  const { state, dispatch } = useStore();
-  const [initialAmount, setInitialAmount] = useState('500');
-  const [showCloseModal, setShowCloseModal] = useState(false);
-  const [showMovModal, setShowMovModal] = useState(false);
-  const [finalCash, setFinalCash] = useState('');
-  const [finalTransfer, setFinalTransfer] = useState('');
-  const [finalCard, setFinalCard] = useState('');
-  const [movType, setMovType] = useState<'in' | 'out'>('in');
-  const [movConcept, setMovConcept] = useState('');
-  const [movAmount, setMovAmount] = useState('');
+  const { activeRegister, history, loading, openRegister, closeRegister, addMovement, getTotals, refetch } = useCashRegister();
+  const { user } = useAuthContext();
+  const { restaurant } = useRestaurant();
+  const currency = restaurant?.moneda ?? 'C$';
+  const [openAmount, setOpenAmount] = useState('');
+  const [opening, setOpening] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [showMovement, setShowMovement] = useState(false);
+  const [movType, setMovType] = useState<'ingreso' | 'egreso'>('ingreso');
+  const [movConcepto, setMovConcepto] = useState('');
+  const [movMonto, setMovMonto] = useState('');
+  const [addingMov, setAddingMov] = useState(false);
+  const [closeResult, setCloseResult] = useState<{ total_ventas: number; total_ingresos: number; total_egresos: number; balance: number } | null>(null);
+  const [dialog, setDialog] = useState<ConfirmDialogState | null>(null)
+  const [dialogLoading, setDialogLoading] = useState(false)
+  const showConfirm = (d: ConfirmDialogState) => setDialog(d)
+  const handleDialogConfirm = async (input?: string) => {
+    if (!dialog) return
+    setDialogLoading(true)
+    try { await dialog.onConfirm(input) }
+    finally { setDialogLoading(false); setDialog(null) }
+  }
 
-  const reg = state.cashRegister;
+  const totals = getTotals();
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todaySales = state.sales.filter(s => s.date === todayStr && s.status === 'completed');
-  const todayCash = todaySales.filter(s => s.paymentMethod === 'cash').reduce((s, x) => s + x.total - x.discount, 0);
-  const todayTransfer = todaySales.filter(s => s.paymentMethod === 'transfer').reduce((s, x) => s + x.total - x.discount, 0);
-  const todayCard = todaySales.filter(s => s.paymentMethod === 'card').reduce((s, x) => s + x.total - x.discount, 0);
-  const todayTotal = todaySales.reduce((s, x) => s + x.total - x.discount, 0);
+  async function handleOpen(e: FormEvent) {
+    e.preventDefault();
+    if (!user?.id) return;
+    setOpening(true);
+    try {
+      await openRegister(user.id, parseFloat(openAmount) || 0);
+      setOpenAmount('');
+      toast.success('Caja abierta exitosamente');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setOpening(false);
+    }
+  }
 
-  function openRegister() {
-    const amt = parseFloat(initialAmount) || 0;
-    const register: CashRegisterSession = {
-      id: `reg-${Date.now()}`,
-      userId: state.currentUser!.id,
-      userName: state.currentUser!.name,
-      openedAt: new Date().toISOString(),
-      initialAmount: amt,
-      status: 'open',
-      movements: [],
-    };
-    dispatch({ type: 'OPEN_REGISTER', register });
-    addAuditLog(dispatch, state.currentUser!.id, state.currentUser!.name,
-      'Apertura de Caja', `Caja #${register.id.slice(-4)}`,
-      { newValue: `Fondo inicial: ${fmt(amt)}` }
+  function handleClose() {
+    if (!activeRegister || !user?.id) return
+    showConfirm({
+      title: 'Cerrar caja',
+      message: 'Se registrará el cierre con las ventas y movimientos del turno actual. ¿Confirmar?',
+      confirmLabel: 'Cerrar caja',
+      variant: 'warning',
+      onConfirm: async () => {
+        setClosing(true)
+        try {
+          const result = await closeRegister(activeRegister.id, user!.id)
+          setCloseResult(result)
+          toast.success('Caja cerrada exitosamente')
+        } catch (err: any) {
+          toast.error(err.message)
+        } finally {
+          setClosing(false)
+        }
+      },
+    })
+  }
+
+  async function handleAddMovement(e: FormEvent) {
+    e.preventDefault();
+    if (!activeRegister || !user?.id || !movConcepto || !movMonto) return;
+    setAddingMov(true);
+    try {
+      await addMovement(activeRegister.id, movType, movConcepto, parseFloat(movMonto), user.id);
+      setMovConcepto('');
+      setMovMonto('');
+      setShowMovement(false);
+      toast.success(`${movType === 'ingreso' ? 'Ingreso' : 'Egreso'} registrado`);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setAddingMov(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
-
-  function closeRegister() {
-    const cash = parseFloat(finalCash) || 0;
-    const transfer = parseFloat(finalTransfer) || 0;
-    const card = parseFloat(finalCard) || 0;
-    dispatch({ type: 'CLOSE_REGISTER', finalCash: cash, finalTransfer: transfer, finalCard: card });
-    addAuditLog(dispatch, state.currentUser!.id, state.currentUser!.name,
-      'Cierre de Caja', `Caja actual`,
-      { newValue: `Efectivo: ${fmt(cash)} | Transferencia: ${fmt(transfer)} | Tarjeta: ${fmt(card)}` }
-    );
-    setShowCloseModal(false);
-  }
-
-  function addMovement() {
-    if (!reg || !movConcept || !movAmount) return;
-    const movement: CashMovement = {
-      id: `mov-${Date.now()}`,
-      type: movType,
-      concept: movConcept,
-      amount: parseFloat(movAmount),
-      createdAt: new Date().toISOString(),
-    };
-    dispatch({
-      type: 'OPEN_REGISTER',
-      register: { ...reg, movements: [...reg.movements, movement] },
-    });
-    setMovConcept('');
-    setMovAmount('');
-    setShowMovModal(false);
-  }
-
-  const expectedCash = (reg?.initialAmount ?? 0) + todayCash +
-    (reg?.movements.filter(m => m.type === 'in').reduce((s, m) => s + m.amount, 0) ?? 0) -
-    (reg?.movements.filter(m => m.type === 'out').reduce((s, m) => s + m.amount, 0) ?? 0);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Status card */}
-      <div className={`rounded-2xl p-6 border-2 ${reg?.status === 'open' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${reg?.status === 'open' ? 'bg-green-100' : 'bg-gray-100'}`}>
-              {reg?.status === 'open' ? <Unlock size={24} className="text-green-600" /> : <Lock size={24} className="text-gray-500" />}
-            </div>
-            <div>
-              <h2 className="text-gray-900">{reg?.status === 'open' ? 'Caja Abierta' : 'Caja Cerrada'}</h2>
-              <p className="text-gray-500 text-sm mt-0.5">
-                {reg?.status === 'open'
-                  ? `Abierta por ${reg.userName} · ${new Date(reg.openedAt).toLocaleTimeString('es-NI')}`
-                  : 'No hay sesión activa'}
-              </p>
-            </div>
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+      <PageHeader
+        title="Caja"
+        subtitle={
+          activeRegister ? (
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              Caja abierta desde {new Date(activeRegister.fecha_apertura).toLocaleTimeString('es-NI')}
+            </span>
+          ) : 'Sin caja abierta'
+        }
+        actions={
+          <Button variant="outline" size="iconTouch" onClick={refetch} aria-label="Actualizar">
+            <RefreshCw size={16} />
+          </Button>
+        }
+      />
+
+      {/* Resultado de cierre */}
+      {closeResult && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-brand-muted border border-brand/20 rounded-2xl p-5"
+        >
+          <h3 className="font-semibold text-brand mb-3">Resumen de Cierre de Caja</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Ventas', value: closeResult.total_ventas, color: 'text-success' },
+              { label: 'Ingresos', value: closeResult.total_ingresos, color: 'text-brand' },
+              { label: 'Egresos', value: closeResult.total_egresos, color: 'text-destructive' },
+              { label: 'Balance Final', value: closeResult.balance, color: 'text-gray-900' },
+            ].map(stat => (
+              <div key={stat.label} className="text-center">
+                <p className="text-xs text-gray-500">{stat.label}</p>
+                <p className={`text-lg font-bold ${stat.color}`}>{currency} {stat.value.toFixed(2)}</p>
+              </div>
+            ))}
           </div>
-          <div className="flex gap-2">
-            {reg?.status === 'open' ? (
-              <>
-                <button
-                  onClick={() => setShowMovModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm transition-all"
-                >
-                  <Plus size={14} />
-                  Movimiento
-                </button>
-                <button
-                  onClick={() => setShowCloseModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm transition-all hover:opacity-90"
-                  style={{ background: '#EF4444' }}
-                >
-                  <Lock size={14} />
-                  Cerrar Caja
-                </button>
-              </>
+          <button onClick={() => setCloseResult(null)} className="mt-3 text-xs text-gray-400 hover:text-gray-600 cursor-pointer">
+            Cerrar
+          </button>
+        </motion.div>
+      )}
+
+      {/* Sin caja abierta */}
+      {!activeRegister ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-brand-muted rounded-2xl flex items-center justify-center mb-4">
+            <CreditCard size={28} className="text-brand" />
+          </div>
+          <h3 className="text-gray-800 font-semibold mb-2">Abrir Caja</h3>
+          <p className="text-gray-400 text-sm mb-6 max-w-xs">Ingresa el monto inicial para comenzar a trabajar</p>
+          <form onSubmit={handleOpen} className="flex gap-3 w-full max-w-xs">
+            <input
+              type="number" min="0" step="0.01"
+              value={openAmount}
+              onChange={e => setOpenAmount(e.target.value)}
+              placeholder={`Monto inicial (${currency})`}
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
+              required
+            />
+            <button type="submit" disabled={opening}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-brand-foreground text-sm font-medium disabled:opacity-60">
+              <Unlock size={14} />
+              {opening ? 'Abriendo...' : 'Abrir'}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <>
+          {/* Totales */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Monto Inicial', value: activeRegister.monto_inicial, icon: <DollarSign size={18} />, cls: 'bg-gray-100 text-gray-500' },
+              { label: 'Ingresos', value: totals.ingresos, icon: <Plus size={18} />, cls: 'bg-success-muted text-success' },
+              { label: 'Egresos', value: totals.egresos, icon: <Minus size={18} />, cls: 'bg-destructive-muted text-destructive' },
+              { label: 'Saldo Actual', value: totals.saldo, icon: <CreditCard size={18} />, cls: 'bg-brand-muted text-brand' },
+            ].map(card => (
+              <div key={card.label} className="bg-white rounded-2xl border border-gray-100 p-5">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${card.cls}`}>
+                  {card.icon}
+                </div>
+                <p className="text-gray-500 text-xs">{card.label}</p>
+                <p className="text-gray-900 font-bold text-xl mt-1">{currency} {card.value.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Acciones */}
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={() => { setMovType('ingreso'); setShowMovement(true); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-success text-success-foreground text-sm font-medium cursor-pointer"
+            >
+              <Plus size={15} /> Registrar Ingreso
+            </button>
+            <button
+              onClick={() => { setMovType('egreso'); setShowMovement(true); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium cursor-pointer"
+            >
+              <Minus size={15} /> Registrar Egreso
+            </button>
+            <button
+              onClick={handleClose}
+              disabled={closing}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 ml-auto"
+            >
+              <Lock size={15} /> {closing ? 'Cerrando...' : 'Cerrar Caja'}
+            </button>
+          </div>
+
+          {/* Modal movimiento */}
+          {showMovement && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+              >
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  Registrar {movType === 'ingreso' ? 'Ingreso' : 'Egreso'}
+                </h3>
+                <p className="text-sm text-gray-500 mb-5">
+                  {movType === 'ingreso' ? 'Entrada de efectivo a la caja' : 'Salida de efectivo de la caja'}
+                </p>
+                <form onSubmit={handleAddMovement} className="space-y-4">
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Concepto</label>
+                    <input type="text" value={movConcepto}
+                      onChange={e => setMovConcepto(e.target.value)}
+                      placeholder="Ej: Pago proveedor, propina..."
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Monto ({currency})</label>
+                    <input type="number" min="0.01" step="0.01" value={movMonto}
+                      onChange={e => setMovMonto(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setShowMovement(false)}
+                      className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600">
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={addingMov}
+                      className={`flex-1 py-2.5 rounded-xl text-white text-sm font-medium disabled:opacity-60 ${movType === 'ingreso' ? 'bg-success' : 'bg-destructive'}`}>
+                      {addingMov ? 'Guardando...' : 'Guardar'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Movimientos del día */}
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-800">Movimientos de Caja</h3>
+            </div>
+            {activeRegister.cash_movements.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <History size={24} className="text-gray-200 mb-2" />
+                <p className="text-gray-400 text-sm">Sin movimientos registrados</p>
+              </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  value={initialAmount}
-                  onChange={e => setInitialAmount(e.target.value)}
-                  placeholder="Fondo inicial"
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#FF5A1F] w-36"
-                />
-                <button
-                  onClick={openRegister}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm transition-all hover:opacity-90"
-                  style={{ background: '#10B981' }}
-                >
-                  <Unlock size={14} />
-                  Abrir Caja
-                </button>
+              <div className="divide-y divide-gray-50">
+                {activeRegister.cash_movements.map((mov) => (
+                  <div key={mov.id} className="flex items-center gap-4 px-5 py-3.5">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      mov.tipo === 'ingreso' ? 'bg-success-muted' : 'bg-destructive-muted'
+                    }`}>
+                      {mov.tipo === 'ingreso'
+                        ? <Plus size={14} className="text-success" />
+                        : <Minus size={14} className="text-destructive" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-800 font-medium">{mov.concepto}</p>
+                      <p className="text-xs text-gray-400">{new Date(mov.fecha).toLocaleTimeString('es-NI')}</p>
+                    </div>
+                    <p className={`font-semibold ${mov.tipo === 'ingreso' ? 'text-success' : 'text-destructive'}`}>
+                      {mov.tipo === 'ingreso' ? '+' : '-'} {currency} {mov.monto.toFixed(2)}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total ventas', value: fmt(todayTotal), icon: <DollarSign size={18} />, color: '#FF5A1F' },
-          { label: 'Efectivo', value: fmt(todayCash), icon: <TrendingUp size={18} />, color: '#10B981' },
-          { label: 'Transferencia', value: fmt(todayTransfer), icon: <TrendingUp size={18} />, color: '#3B82F6' },
-          { label: 'Tarjeta', value: fmt(todayCard), icon: <TrendingUp size={18} />, color: '#8B5CF6' },
-        ].map(item => (
-          <div key={item.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: item.color + '15' }}>
-              <span style={{ color: item.color }}>{item.icon}</span>
-            </div>
-            <p className="text-gray-400 text-xs">{item.label}</p>
-            <p className="text-gray-900 font-bold mt-0.5" style={{ fontSize: '22px' }}>{item.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Expected cash */}
-      {reg?.status === 'open' && (
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h3 className="text-gray-900 mb-4">Resumen de caja esperado</h3>
-          <div className="space-y-3">
-            {[
-              { label: 'Fondo inicial', value: reg.initialAmount, color: 'text-gray-700' },
-              { label: '+ Ventas en efectivo', value: todayCash, color: 'text-green-600' },
-              { label: '+ Entradas manuales', value: reg.movements.filter(m => m.type === 'in').reduce((s, m) => s + m.amount, 0), color: 'text-blue-600' },
-              { label: '- Salidas manuales', value: reg.movements.filter(m => m.type === 'out').reduce((s, m) => s + m.amount, 0), color: 'text-red-500' },
-            ].map(row => (
-              <div key={row.label} className="flex justify-between text-sm">
-                <span className="text-gray-500">{row.label}</span>
-                <span className={`font-medium ${row.color}`}>{fmt(row.value)}</span>
-              </div>
-            ))}
-            <div className="pt-3 border-t border-gray-100 flex justify-between font-bold text-gray-900">
-              <span>Total esperado en caja</span>
-              <span style={{ color: '#FF5A1F' }}>{fmt(expectedCash)}</span>
-            </div>
-          </div>
-        </div>
+        </>
       )}
 
-      {/* Movements */}
-      {reg?.movements && reg.movements.length > 0 && (
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h3 className="text-gray-900 mb-4">Movimientos manuales</h3>
-          <div className="space-y-2">
-            {reg.movements.map(m => (
-              <div key={m.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${m.type === 'in' ? 'bg-green-100' : 'bg-red-100'}`}>
-                  {m.type === 'in' ? <TrendingUp size={14} className="text-green-600" /> : <TrendingDown size={14} className="text-red-500" />}
+      {/* Historial de cajas */}
+      {history.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <History size={16} className="text-gray-400" /> Historial de Cajas
+            </h3>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {history.map(reg => (
+              <div key={reg.id} className="flex items-center gap-4 px-5 py-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    {new Date(reg.fecha_apertura).toLocaleDateString('es-NI', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(reg.fecha_apertura).toLocaleTimeString('es-NI')}
+                    {reg.fecha_cierre && ` → ${new Date(reg.fecha_cierre).toLocaleTimeString('es-NI')}`}
+                  </p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-gray-700 text-sm">{m.concept}</p>
-                  <p className="text-gray-400 text-xs">{new Date(m.createdAt).toLocaleTimeString('es-NI')}</p>
-                </div>
-                <span className={`font-medium text-sm ${m.type === 'in' ? 'text-green-600' : 'text-red-500'}`}>
-                  {m.type === 'in' ? '+' : '-'}{fmt(m.amount)}
+                <div className="flex-1" />
+                <p className="text-sm text-gray-600">Inicial: {currency} {reg.monto_inicial.toFixed(2)}</p>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  reg.estado === 'abierta' ? 'bg-success-muted text-success' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {reg.estado === 'abierta' ? 'Abierta' : 'Cerrada'}
                 </span>
               </div>
             ))}
@@ -206,111 +327,16 @@ export function CashRegister() {
         </div>
       )}
 
-      {/* Close modal */}
-      <AnimatePresence>
-        {showCloseModal && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.92 }} animate={{ scale: 1 }} exit={{ scale: 0.92 }}
-              className="bg-white rounded-2xl w-full max-w-md shadow-2xl"
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-gray-900">Cierre de Caja</h3>
-                <button onClick={() => setShowCloseModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100">
-                  <X size={16} className="text-gray-500" />
-                </button>
-              </div>
-              <div className="px-6 py-4 space-y-4">
-                <p className="text-gray-500 text-sm">Ingresa los montos físicos contados para el cierre.</p>
-                {[
-                  { label: 'Efectivo contado', value: finalCash, set: setFinalCash, expected: expectedCash },
-                  { label: 'Transferencias', value: finalTransfer, set: setFinalTransfer, expected: todayTransfer },
-                  { label: 'Tarjeta', value: finalCard, set: setFinalCard, expected: todayCard },
-                ].map(f => (
-                  <div key={f.label}>
-                    <label className="text-gray-600 text-sm block mb-1.5">{f.label}</label>
-                    <input
-                      type="number"
-                      value={f.value}
-                      onChange={e => f.set(e.target.value)}
-                      placeholder={`Esperado: ${fmt(f.expected)}`}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#FF5A1F]"
-                    />
-                    {f.value && (
-                      <p className={`text-xs mt-1 ${parseFloat(f.value) >= f.expected ? 'text-green-600' : 'text-red-500'}`}>
-                        Diferencia: {fmt(parseFloat(f.value) - f.expected)}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="px-6 pb-5 flex gap-3">
-                <button onClick={() => setShowCloseModal(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50">
-                  Cancelar
-                </button>
-                <button onClick={closeRegister} className="flex-1 py-2.5 rounded-xl text-white text-sm" style={{ background: '#EF4444' }}>
-                  Confirmar Cierre
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Movement modal */}
-      <AnimatePresence>
-        {showMovModal && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.92 }} animate={{ scale: 1 }} exit={{ scale: 0.92 }}
-              className="bg-white rounded-2xl w-full max-w-sm shadow-2xl"
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-gray-900">Movimiento Manual</h3>
-                <button onClick={() => setShowMovModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100">
-                  <X size={16} className="text-gray-500" />
-                </button>
-              </div>
-              <div className="px-6 py-4 space-y-4">
-                <div className="flex gap-2">
-                  {(['in', 'out'] as const).map(t => (
-                    <button key={t} onClick={() => setMovType(t)}
-                      className={`flex-1 py-2 rounded-xl text-sm transition-all ${movType === t ? 'text-white' : 'bg-gray-100 text-gray-600'}`}
-                      style={movType === t ? { background: t === 'in' ? '#10B981' : '#EF4444' } : undefined}>
-                      {t === 'in' ? '+ Entrada' : '- Salida'}
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  <label className="text-gray-600 text-sm block mb-1.5">Concepto</label>
-                  <input value={movConcept} onChange={e => setMovConcept(e.target.value)} placeholder="Ej: Pago proveedor"
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#FF5A1F]" />
-                </div>
-                <div>
-                  <label className="text-gray-600 text-sm block mb-1.5">Monto</label>
-                  <input type="number" value={movAmount} onChange={e => setMovAmount(e.target.value)} placeholder="C$0"
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#FF5A1F]" />
-                </div>
-              </div>
-              <div className="px-6 pb-5 flex gap-3">
-                <button onClick={() => setShowMovModal(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50">
-                  Cancelar
-                </button>
-                <button onClick={addMovement} className="flex-1 py-2.5 rounded-xl text-white text-sm hover:opacity-90"
-                  style={{ background: movType === 'in' ? '#10B981' : '#EF4444' }}>
-                  Registrar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ConfirmDialog
+        open={!!dialog}
+        loading={dialogLoading}
+        title={dialog?.title ?? ''}
+        message={dialog?.message ?? ''}
+        confirmLabel={dialog?.confirmLabel}
+        variant={dialog?.variant}
+        onConfirm={handleDialogConfirm}
+        onCancel={() => setDialog(null)}
+      />
     </div>
   );
 }

@@ -1,0 +1,18 @@
+# Supabase local config — linked to remote project via `supabase link`
+# Full schema: run `supabase db pull` against the linked project
+# Types: npm run db:types
+
+[project]
+id = "kkpwvbcjfmobyxoyekxn"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+
+[functions.create-user]
+verify_jwt = true
+
+[functions.reset-user-password]
+verify_jwt = true

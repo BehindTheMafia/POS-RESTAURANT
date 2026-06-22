@@ -2,113 +2,143 @@
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #FF5A1F;
-  --primary-foreground: #ffffff;
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
+
+  /* Brand — único acento configurable, valor por defecto: verde oscuro */
+  --brand: #166534;
+  --brand-foreground: #ffffff;
+  --brand-muted: #dcfce7;
+  --brand-subtle: #f0fdf4;
+  --brand-ring: rgba(22, 101, 52, 0.2);
+
+  /* Alias de compatibilidad para componentes shadcn/tailwind que usan --primary */
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+
+  /* Sidebar — derivado del brand, profundo y oscuro */
+  --sidebar: #052e16;
+  --sidebar-foreground: #f0fdf4;
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(22, 101, 52, 0.2);
+  --sidebar-accent-foreground: #dcfce7;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: rgba(22, 101, 52, 0.4);
+
+  /* Semánticos — NO cambian con el preset */
+  --success: #15803d;
+  --success-foreground: #ffffff;
+  --success-muted: #dcfce7;
+  --success-border: rgba(21, 128, 61, 0.25);
+  --warning: #ca8a04;
+  --warning-foreground: #ffffff;
+  --warning-muted: #fef9c3;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
+  --destructive-muted: #fee2e2;
+
+  /* Superficie y layout */
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #374151;
   --border: rgba(0, 0, 0, 0.1);
   --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
+  --input-background: #f9fafb;
+  --switch-background: #d1d5db;
+  --ring: var(--brand-ring);
+  --radius: 0.625rem;
+
+  /* Chart colors */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #FF5A1F;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Typography */
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
+  --brand: #4ade80;
+  --brand-foreground: #052e16;
+  --brand-muted: #14532d;
+  --brand-subtle: #052e16;
+  --brand-ring: rgba(74, 222, 128, 0.25);
+
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+
+  --sidebar: #030d07;
+  --sidebar-foreground: #dcfce7;
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: #052e16;
+  --sidebar-accent: rgba(74, 222, 128, 0.15);
+  --sidebar-accent-foreground: #86efac;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-ring: rgba(74, 222, 128, 0.35);
+
+  --success: #4ade80;
+  --success-foreground: #052e16;
+  --success-muted: #14532d;
+  --success-border: rgba(74, 222, 128, 0.2);
+  --warning: #fbbf24;
+  --warning-foreground: #1c1917;
+  --warning-muted: #451a03;
+  --destructive: #f87171;
+  --destructive-foreground: #1c0303;
+  --destructive-muted: #450a0a;
+
+  --background: #0a0f0a;
+  --foreground: #f0fdf4;
+  --card: #111a11;
+  --card-foreground: #f0fdf4;
+  --popover: #111a11;
+  --popover-foreground: #f0fdf4;
+  --muted: #1a261a;
+  --muted-foreground: #9ca3af;
+  --accent: #1a261a;
+  --accent-foreground: #d1fae5;
+  --secondary: #1a261a;
+  --secondary-foreground: #d1fae5;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.05);
+  --input-background: #1a261a;
+  --switch-background: #374151;
+  --ring: var(--brand-ring);
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  /* Brand */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-ring: var(--brand-ring);
+
+  /* Alias primary */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-input-background: var(--input-background);
-  --color-switch-background: var(--switch-background);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Sidebar */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -117,6 +147,50 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Semánticos */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-muted: var(--destructive-muted);
+
+  /* Layout */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Radii */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
@@ -124,17 +198,34 @@
     @apply border-border outline-ring/50;
   }
 
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
-
   html {
     font-size: var(--font-size);
+    /* Smooth programmatic scroll (e.g. anchor links) */
+    scroll-behavior: smooth;
+    /* Prevent text size adjustment on mobile orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Subpixel antialiasing where supported */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Promote frequently-animated elements to their own compositor layer.
+     Apply via class="gpu" to sidebars, modals, and fixed panels. */
+  .gpu {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Reserve compositor layers for motion elements that animate opacity/transform.
+     Framer Motion already does this internally, but explicit declaration on
+     known heavy containers prevents layout recalculation jank. */
+  [data-framer-motion] {
+    will-change: transform, opacity;
   }
 
   h1 {
