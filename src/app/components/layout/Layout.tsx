@@ -31,14 +31,21 @@ const PageSkeleton = () => (
 
 export function Layout() {
   const location = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024
+    }
+    return true
+  })
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Desktop sidebar — always visible, no animation needed */}
-      <div className="hidden lg:block shrink-0 h-full">
-        <Sidebar onClose={() => {}} />
-      </div>
+      {/* Desktop sidebar */}
+      {sidebarOpen && (
+        <div className="hidden lg:block shrink-0 h-full">
+          <Sidebar onClose={() => setSidebarOpen(false)} />
+        </div>
+      )}
 
       {/* Mobile backdrop */}
       <AnimatePresence>

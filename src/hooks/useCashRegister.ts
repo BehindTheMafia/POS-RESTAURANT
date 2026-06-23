@@ -67,6 +67,28 @@ export function useCashRegister() {
     return data as { total_ventas: number; total_ingresos: number; total_egresos: number; balance: number };
   }, [fetchRegister]);
 
+  const closeRegisterDetailed = useCallback(async (
+    registerId: string,
+    montoReal: number,
+    montoEsperado: number,
+    diferencia: number,
+    detalles: any
+  ) => {
+    const { error: err } = await supabase
+      .from('cash_registers')
+      .update({
+        estado: 'cerrada',
+        fecha_cierre: new Date().toISOString(),
+        monto_cierre_real: montoReal,
+        monto_cierre_esperado: montoEsperado,
+        diferencia: diferencia,
+        detalles_cierre: detalles,
+      })
+      .eq('id', registerId);
+    if (err) throw err;
+    await fetchRegister();
+  }, [fetchRegister]);
+
   const addMovement = useCallback(async (
     registerId: string,
     tipo: 'ingreso' | 'egreso',
@@ -99,5 +121,5 @@ export function useCashRegister() {
     };
   }, [activeRegister]);
 
-  return { activeRegister, history, loading, error, refetch: fetchRegister, openRegister, closeRegister, addMovement, getTotals };
+  return { activeRegister, history, loading, error, refetch: fetchRegister, openRegister, closeRegister, closeRegisterDetailed, addMovement, getTotals };
 }

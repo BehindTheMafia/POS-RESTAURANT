@@ -787,37 +787,23 @@ export function POSOrder() {
                       <p className="text-sm font-bold text-gray-900 truncate leading-tight">
                         {product?.nombre ?? 'Producto'}
                       </p>
-                      {editingNoteItemId === item.id ? (
-                        <div className="flex items-center gap-1 mt-1">
-                          <input
-                            autoFocus
-                            type="text"
-                            value={noteText}
-                            onChange={e => setNoteText(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') handleSaveNote(item.id); if (e.key === 'Escape') { setEditingNoteItemId(null); setNoteText(''); } }}
-                            placeholder="Nota para cocina..."
-                            className="flex-1 text-[11px] border border-brand rounded-md px-1.5 py-0.5 outline-none bg-white"
-                          />
-                          <button onClick={() => handleSaveNote(item.id)} className="text-brand text-[10px] font-bold cursor-pointer">OK</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => { setEditingNoteItemId(item.id); setNoteText((item as any).notas ?? ''); }}
-                          className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand mt-0.5 cursor-pointer transition-colors"
-                        >
-                          <MessageSquare size={10} />
-                          {(item as any).notas ? (
-                            <span className="text-brand font-medium truncate max-w-[100px]">{(item as any).notas}</span>
-                          ) : (
-                            <span>+ nota</span>
-                          )}
-                        </button>
-                      )}
-                      {!editingNoteItemId || editingNoteItemId !== item.id ? (
-                        <p className="text-[11px] text-gray-400 mt-0.5">
-                          {currency} {item.precio_unitario.toFixed(2)} c/u
-                        </p>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => { setEditingNoteItemId(item.id); setNoteText((item as any).notas ?? ''); }}
+                        className={`mt-1 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold transition-all duration-200 cursor-pointer w-fit ${
+                          (item as any).notas
+                            ? 'bg-brand/10 text-brand hover:bg-brand/20'
+                            : 'bg-gray-100 text-gray-550 hover:bg-brand/10 hover:text-brand'
+                        }`}
+                      >
+                        <MessageSquare size={11} className={(item as any).notas ? 'text-brand' : 'text-gray-450'} />
+                        <span className="truncate max-w-[100px]">
+                          {(item as any).notas ? (item as any).notas : '+ Nota'}
+                        </span>
+                      </button>
+                      <p className="text-[11px] text-gray-450 mt-0.5">
+                        {currency} {item.precio_unitario.toFixed(2)} c/u
+                      </p>
                     </div>
 
                     <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 shrink-0">
@@ -960,6 +946,90 @@ export function POSOrder() {
         onConfirm={handleDialogConfirm}
         onCancel={() => setDialog(null)}
       />
+
+      {/* Modal para Notas de Preparación */}
+      <AnimatePresence>
+        {editingNoteItemId && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 border border-gray-150 space-y-4"
+            >
+              <div>
+                <h3 className="font-black text-gray-900 text-lg">Notas de preparación</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Para: <span className="font-bold text-brand">
+                    {(() => {
+                      const item = cartItems.find(i => i.id === editingNoteItemId);
+                      const prod = products.find(p => p.id === item?.product_id);
+                      return prod?.nombre ?? 'Producto';
+                    })()}
+                  </span>
+                </p>
+              </div>
+
+              <textarea
+                autoFocus
+                rows={3}
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Escribe instrucciones especiales (ej. sin cebolla, salsa extra...)"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand bg-gray-50 focus:bg-white transition-all resize-none"
+              />
+
+              {/* Quick chips */}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Notas rápidas</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Sin cebolla',
+                    'Sin picante',
+                    'Salsa extra',
+                    'Para llevar',
+                    'Término medio',
+                    'Bien cocido',
+                    'Sin mayonesa',
+                    'Sin lechuga',
+                    'Pocas papas'
+                  ].map(chip => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => {
+                        const trimmed = noteText.trim();
+                        if (trimmed.includes(chip)) return;
+                        setNoteText(trimmed ? `${trimmed}, ${chip}` : chip);
+                      }}
+                      className="px-2.5 py-1 bg-gray-100 hover:bg-brand/10 hover:text-brand text-gray-600 rounded-full text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setEditingNoteItemId(null); setNoteText(''); }}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveNote(editingNoteItemId)}
+                  className="flex-1 py-3 rounded-xl bg-brand text-brand-foreground text-sm font-black transition-colors cursor-pointer shadow-md shadow-brand/10"
+                >
+                  Guardar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

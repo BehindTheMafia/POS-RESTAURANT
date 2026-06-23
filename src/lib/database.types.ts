@@ -155,6 +155,10 @@ export type Database = {
           monto_inicial: number
           restaurant_id: string
           usuario_id: string | null
+          monto_cierre_real: number | null
+          monto_cierre_esperado: number | null
+          diferencia: number | null
+          detalles_cierre: Json | null
         }
         Insert: {
           estado?: string
@@ -164,6 +168,10 @@ export type Database = {
           monto_inicial?: number
           restaurant_id: string
           usuario_id?: string | null
+          monto_cierre_real?: number | null
+          monto_cierre_esperado?: number | null
+          diferencia?: number | null
+          detalles_cierre?: Json | null
         }
         Update: {
           estado?: string
@@ -173,6 +181,10 @@ export type Database = {
           monto_inicial?: number
           restaurant_id?: string
           usuario_id?: string | null
+          monto_cierre_real?: number | null
+          monto_cierre_esperado?: number | null
+          diferencia?: number | null
+          detalles_cierre?: Json | null
         }
         Relationships: [
           {
