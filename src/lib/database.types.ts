@@ -275,6 +275,7 @@ export type Database = {
           restaurant_id: string
           stock_actual: number
           stock_minimo: number
+          tipo: string
           unidad: string
         }
         Insert: {
@@ -286,6 +287,7 @@ export type Database = {
           restaurant_id: string
           stock_actual?: number
           stock_minimo?: number
+          tipo?: string
           unidad: string
         }
         Update: {
@@ -297,6 +299,7 @@ export type Database = {
           restaurant_id?: string
           stock_actual?: number
           stock_minimo?: number
+          tipo?: string
           unidad?: string
         }
         Relationships: [

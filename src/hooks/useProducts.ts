@@ -81,9 +81,16 @@ export function useProducts() {
   }, [fetchAll]);
 
   const deleteProduct = useCallback(async (id: string) => {
+    // Delete associated recipes first
+    const { error: recipeErr } = await supabase
+      .from('recipes')
+      .delete()
+      .eq('product_id', id);
+    if (recipeErr) throw recipeErr;
+
     const { error: err } = await supabase
       .from('products')
-      .update({ activo: false })
+      .delete()
       .eq('id', id);
     if (err) throw err;
     await fetchAll();

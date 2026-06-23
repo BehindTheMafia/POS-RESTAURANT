@@ -154,13 +154,13 @@ export function Products() {
 
   function handleDeleteProduct(id: string, nombre: string) {
     showConfirm({
-      title: 'Desactivar producto',
-      message: `¿Desactivar el producto "${nombre}"? Podrá reactivarlo desde la configuración.`,
-      confirmLabel: 'Desactivar',
-      variant: 'warning',
+      title: 'Eliminar Producto',
+      message: `¿Eliminar "${nombre}" permanentemente? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
       onConfirm: async () => {
         await deleteProduct(id)
-        toast.success('Producto desactivado')
+        toast.success('Producto eliminado permanentemente')
       },
     })
   }
@@ -397,7 +397,7 @@ export function Products() {
             animate="animate"
             exit="exit"
             transition={spring.popup}
-            className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[92vh]"
+            className="bg-white rounded-2xl w-full max-w-lg md:max-w-2xl lg:max-w-3xl shadow-2xl flex flex-col max-h-[96vh] md:max-h-[85vh]"
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
               <h3 className="font-semibold text-gray-900">
@@ -408,82 +408,91 @@ export function Products() {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
-              {/* Imagen */}
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
-                  {imagePreview
-                    ? <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                    : <Package size={24} className="text-gray-300" />}
-                </div>
-                <label className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-400 hover:border-brand hover:text-brand cursor-pointer transition-colors">
-                  <Upload size={15} />
-                  {imageFile ? imageFile.name : 'Subir imagen'}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
-                </label>
-              </div>
+            <form onSubmit={handleSave} className="p-4 md:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                {/* Left column: basic fields */}
+                <div className="space-y-4">
+                  {/* Imagen */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
+                      {imagePreview
+                        ? <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                        : <Package size={20} className="text-gray-300" />}
+                    </div>
+                    <label className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-400 hover:border-brand hover:text-brand cursor-pointer transition-colors">
+                      <Upload size={14} />
+                      {imageFile ? imageFile.name : 'Subir imagen'}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+                    </label>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="text-sm text-gray-600 block mb-1">Nombre *</label>
-                  <input type="text" value={form.nombre}
-                    onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
-                    required />
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Nombre *</label>
+                    <input type="text" value={form.nombre}
+                      onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
+                      required />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Descripción</label>
+                    <textarea value={form.descripcion}
+                      onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand resize-none"
+                      rows={1} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm text-gray-600 block mb-1">Precio venta *</label>
+                      <input type="number" min="0" step="0.01" value={form.precio}
+                        onChange={e => setForm(f => ({ ...f, precio: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        required />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-600 block mb-1">Costo</label>
+                      <input type="number" min="0" step="0.01" value={form.costo}
+                        onChange={e => setForm(f => ({ ...f, costo: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Categoría</label>
+                    <select value={form.category_id}
+                      onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand bg-white">
+                      <option value="">Sin categoría</option>
+                      {categories.filter(c => c.estado).map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="col-span-2">
-                  <label className="text-sm text-gray-600 block mb-1">Descripción</label>
-                  <textarea value={form.descripcion}
-                    onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand resize-none"
-                    rows={2} />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Precio de venta *</label>
-                  <input type="number" min="0" step="0.01" value={form.precio}
-                    onChange={e => setForm(f => ({ ...f, precio: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
-                    required />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Costo</label>
-                  <input type="number" min="0" step="0.01" value={form.costo}
-                    onChange={e => setForm(f => ({ ...f, costo: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand"
+
+                {/* Right column: stock section + active toggle */}
+                <div className="space-y-4">
+                  <ProductStockSection
+                    mode={stockMode}
+                    onModeChange={setStockMode}
+                    stock={form.stock}
+                    onStockChange={value => setForm(f => ({ ...f, stock: value }))}
+                    productName={form.nombre}
+                    inventoryItems={inventoryItems}
+                    recipeItems={recipeItems}
+                    onRecipeChange={setRecipeItems}
                   />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-sm text-gray-600 block mb-1">Categoría</label>
-                  <select value={form.category_id}
-                    onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand bg-white">
-                    <option value="">Sin categoría</option>
-                    {categories.filter(c => c.estado).map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-                <ProductStockSection
-                  mode={stockMode}
-                  onModeChange={setStockMode}
-                  stock={form.stock}
-                  onStockChange={value => setForm(f => ({ ...f, stock: value }))}
-                  productName={form.nombre}
-                  inventoryItems={inventoryItems}
-                  recipeItems={recipeItems}
-                  onRecipeChange={setRecipeItems}
-                />
-                <div className="col-span-2 flex items-center gap-3">
-                  <button type="button"
-                    onClick={() => setForm(f => ({ ...f, activo: !f.activo }))}
-                    className={`relative w-11 h-6 rounded-full transition-colors ${form.activo ? 'bg-brand' : 'bg-gray-200'}`}>
-                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form.activo ? 'left-5' : 'left-0.5'}`} />
-                  </button>
-                  <label className="text-sm text-gray-600">Producto activo</label>
+                  <div className="flex items-center gap-3">
+                    <button type="button"
+                      onClick={() => setForm(f => ({ ...f, activo: !f.activo }))}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${form.activo ? 'bg-brand' : 'bg-gray-200'}`}>
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form.activo ? 'left-5' : 'left-0.5'}`} />
+                    </button>
+                    <label className="text-sm text-gray-600">Producto activo</label>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 sticky bottom-0 bg-white">
                 <button type="button" onClick={() => setShowModal(false)}
                   className="flex-1 py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
                   Cancelar

@@ -63,5 +63,14 @@ export function useInventory() {
     await fetchItems();
   }, [fetchItems]);
 
-  return { items, lowItems, loading, error, refetch: fetchItems, createItem, updateItem, deactivateItem };
+  const deleteItem = useCallback(async (id: string) => {
+    const { error: err } = await supabase
+      .from('inventory_items')
+      .delete()
+      .eq('id', id);
+    if (err) throw err;
+    await fetchItems();
+  }, [fetchItems]);
+
+  return { items, lowItems, loading, error, refetch: fetchItems, createItem, updateItem, deactivateItem, deleteItem };
 }

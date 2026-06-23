@@ -624,22 +624,24 @@ export function Reports() {
       const timeStr = d.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
       const pmStr = s.payments.map(p => p.payment_method?.nombre).filter(Boolean).join(' / ') || 'N/A';
       return `
-        <tr>
-          <td>${index + 1}</td>
+        <tr${index % 2 === 0 ? '' : ' class="alt"'}>
+          <td class="text-center">${index + 1}</td>
           <td>${dateStr}</td>
           <td>${timeStr}</td>
-          <td>#${s.orders?.id?.slice(0, 8) || s.id.slice(0, 8)}</td>
-          <td>${s.orders?.mesa?.nombre || 'N/A'}</td>
+          <td class="text-mono">#${s.orders?.id?.slice(0, 8) || s.id.slice(0, 8)}</td>
+          <td>${s.orders?.mesa?.nombre || '—'}</td>
           <td>${s.cliente || 'Consumidor Final'}</td>
           <td>${pmStr}</td>
           <td>${s.cajero?.nombre || 'Sistema'}</td>
           <td class="text-right">${currency} ${Number(s.subtotal).toFixed(2)}</td>
           <td class="text-right">${currency} ${Number(s.impuestos).toFixed(2)}</td>
-          <td class="text-right"><b>${currency} ${Number(s.total).toFixed(2)}</b></td>
-          <td><span class="badge ${s.estado}">${s.estado}</span></td>
+          <td class="text-right font-bold">${currency} ${Number(s.total).toFixed(2)}</td>
+          <td class="text-center"><span class="badge ${s.estado}">${s.estado === 'completada' ? 'Completada' : 'Anulada'}</span></td>
         </tr>
       `;
     }).join('');
+
+    const { totalSales, count, ticketPromedio, impuestos } = periodStats;
 
     const printWindow = window.open('', '_blank', 'width=1024,height=768');
     if (!printWindow) return;
@@ -649,47 +651,165 @@ export function Reports() {
         <head>
           <title>Reporte de Ventas - ${rName}</title>
           <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; padding: 20px; color: #333; }
-            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #166534; padding-bottom: 10px; }
-            .title { font-size: 18px; font-weight: bold; color: #333; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-            th { background-color: #f3f4f6; color: #374151; font-weight: bold; text-align: left; padding: 8px; border: 1px solid #e5e7eb; }
-            td { padding: 8px; border: 1px solid #e5e7eb; }
+            @page { margin: 18mm 14mm; }
+            * { box-sizing: border-box; }
+            body {
+              font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+              font-size: 10px;
+              color: #1e293b;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .page { max-width: 1100px; margin: 0 auto; }
+
+            /* Header */
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              padding-bottom: 16px;
+              border-bottom: 3px solid #166534;
+              margin-bottom: 20px;
+            }
+            .header-left .brand { font-size: 20px; font-weight: 800; color: #166534; letter-spacing: -0.3px; }
+            .header-left .subtitle { font-size: 11px; color: #64748b; margin-top: 2px; }
+            .header-right { text-align: right; font-size: 9px; color: #94a3b8; line-height: 1.6; }
+
+            /* Summary cards */
+            .summary {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 10px;
+              margin-bottom: 20px;
+            }
+            .card {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 12px 14px;
+              text-align: center;
+            }
+            .card .label { font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 700; }
+            .card .value { font-size: 16px; font-weight: 800; color: #166534; margin-top: 4px; }
+            .card .value.sub { color: #0f172a; }
+
+            /* Table */
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 9.5px;
+            }
+            thead th {
+              background: #166534;
+              color: white;
+              font-weight: 700;
+              font-size: 8px;
+              text-transform: uppercase;
+              letter-spacing: 0.4px;
+              padding: 9px 7px;
+              text-align: left;
+              border: none;
+            }
+            tbody td {
+              padding: 7px;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            tbody tr.alt td { background: #f8fafc; }
+            tbody tr:hover td { background: #f1f5f9; }
+
             .text-right { text-align: right; }
-            .badge { padding: 2px 6px; font-size: 9px; font-weight: bold; border-radius: 4px; }
-            .badge.completada { background-color: #d1fae5; color: #065f46; text-transform: capitalize; }
-            .badge.anulada { background-color: #fee2e2; color: #991b1b; text-transform: capitalize; }
+            .text-center { text-align: center; }
+            .text-mono { font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 9px; }
+            .font-bold { font-weight: 700; }
+
+            .badge {
+              display: inline-block;
+              padding: 2px 8px;
+              font-size: 8px;
+              font-weight: 700;
+              border-radius: 10px;
+              text-transform: capitalize;
+            }
+            .badge.completada { background: #d1fae5; color: #065f46; }
+            .badge.anulada { background: #fee2e2; color: #991b1b; }
+
+            /* Footer */
+            .footer {
+              margin-top: 24px;
+              padding-top: 12px;
+              border-top: 1px solid #e2e8f0;
+              font-size: 8px;
+              color: #94a3b8;
+              display: flex;
+              justify-content: space-between;
+            }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div>
-              <div class="title">${rName}</div>
-              <div>Reporte de Ventas: ${from} al ${to}</div>
+          <div class="page">
+            <!-- Header -->
+            <div class="header">
+              <div class="header-left">
+                <div class="brand">${rName}</div>
+                <div class="subtitle">Reporte de Ventas · ${from} al ${to}</div>
+              </div>
+              <div class="header-right">
+                <div>Generado: ${new Date().toLocaleString('es-NI')}</div>
+                <div>${count} transacciones</div>
+              </div>
             </div>
-            <div>Fecha de Impresión: ${new Date().toLocaleDateString('es-NI')}</div>
+
+            <!-- Summary -->
+            <div class="summary">
+              <div class="card">
+                <div class="label">Ventas Totales</div>
+                <div class="value">${currency} ${totalSales.toFixed(2)}</div>
+              </div>
+              <div class="card">
+                <div class="label">Transacciones</div>
+                <div class="value sub">${count}</div>
+              </div>
+              <div class="card">
+                <div class="label">Ticket Promedio</div>
+                <div class="value">${currency} ${ticketPromedio.toFixed(2)}</div>
+              </div>
+              <div class="card">
+                <div class="label">IVA Total</div>
+                <div class="value sub">${currency} ${impuestos.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <table>
+              <thead>
+                <tr>
+                  <th class="text-center">#</th>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Orden</th>
+                  <th>Mesa</th>
+                  <th>Cliente</th>
+                  <th>Método Pago</th>
+                  <th>Cajero</th>
+                  <th class="text-right">Subtotal</th>
+                  <th class="text-right">IVA</th>
+                  <th class="text-right">Total</th>
+                  <th class="text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+
+            <!-- Footer -->
+            <div class="footer">
+              <span>${rName} · Reporte de Ventas</span>
+              <span>Página 1 de 1</span>
+            </div>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Orden</th>
-                <th>Mesa</th>
-                <th>Cliente</th>
-                <th>Método de Pago</th>
-                <th>Cajero</th>
-                <th class="text-right">Subtotal</th>
-                <th class="text-right">Impuestos</th>
-                <th class="text-right">Total</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
         </body>
       </html>
     `);

@@ -1018,6 +1018,45 @@ export function POSOrder() {
                 </div>
               </div>
 
+              {/* Salsas touch buttons */}
+              {inventoryItems.filter(s => s.tipo === 'salsa' && s.activo).length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Salsas</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {inventoryItems
+                      .filter(s => s.tipo === 'salsa' && s.activo)
+                      .map(salsa => {
+                        const hasStock = salsa.stock_actual > 0;
+                        const isSelected = noteText.toLowerCase().includes(salsa.nombre.toLowerCase());
+                        return (
+                          <button
+                            key={salsa.id}
+                            type="button"
+                            onClick={() => {
+                              if (!hasStock) return;
+                              const trimmed = noteText.trim();
+                              if (trimmed.toLowerCase().includes(salsa.nombre.toLowerCase())) return;
+                              setNoteText(trimmed ? `${trimmed}, ${salsa.nombre}` : salsa.nombre);
+                            }}
+                            disabled={!hasStock}
+                            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer min-h-[48px] ${
+                              isSelected
+                                ? 'bg-brand/15 text-brand border-2 border-brand'
+                                : hasStock
+                                ? 'bg-amber-50 text-amber-700 border-2 border-amber-200 hover:bg-amber-100 hover:border-amber-300'
+                                : 'bg-gray-100 text-gray-400 border-2 border-gray-200 cursor-not-allowed opacity-50'
+                            }`}
+                          >
+                            {isSelected ? '✓' : '🌶️'}
+                            <span className="flex-1 text-left">{salsa.nombre.replace('Salsa ', '')}</span>
+                            {!hasStock && <span className="text-[10px]">agotado</span>}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"

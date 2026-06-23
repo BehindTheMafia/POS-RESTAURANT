@@ -32,7 +32,7 @@ export const ProductStockSection = ({
   onRecipeChange,
 }: ProductStockSectionProps) => {
   return (
-    <div className="col-span-2 space-y-3">
+    <div className="space-y-3">
       <label className="text-sm text-gray-600 block">Control de stock</label>
 
       <div className="grid grid-cols-3 gap-2">
