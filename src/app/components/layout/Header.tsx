@@ -28,7 +28,7 @@ export function Header({ onToggleSidebar, sidebarOpen }: HeaderProps) {
   const [tableName, setTableName] = useState<string | null>(null)
 
   const baseRoute = '/' + location.pathname.split('/')[1]
-  let title = pageTitles[baseRoute] ?? 'POS Restaurant'
+  let title = pageTitles[baseRoute] ?? 'PRIMEWINGS POS'
 
   useEffect(() => {
     if (baseRoute !== '/pos' || !tableId) {

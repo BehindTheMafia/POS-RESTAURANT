@@ -1,4 +1,4 @@
-# POS Restaurant
+# PRIMEWINGS POS
 
 Sistema POS para restaurantes con React, Vite, Tailwind y Supabase.
 

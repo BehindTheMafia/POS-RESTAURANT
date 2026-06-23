@@ -89,7 +89,7 @@ export function Login() {
             <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center">
               <Flame size={20} className="text-brand-foreground" />
             </div>
-            <span className="text-sidebar-foreground text-xl font-bold">POS Restaurant</span>
+            <span className="text-sidebar-foreground text-xl font-bold">PRIMEWINGS POS</span>
           </div>
           <div className="flex-1 flex flex-col justify-center">
             <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
@@ -104,7 +104,7 @@ export function Login() {
               </p>
             </motion.div>
           </div>
-          <p className="text-sidebar-foreground/30 text-xs">POS Restaurant v2.0</p>
+          <p className="text-sidebar-foreground/30 text-xs">PRIMEWINGS POS v2.0</p>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export function Login() {
             <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center">
               <Flame size={18} className="text-brand-foreground" />
             </div>
-            <span className="text-gray-900 text-xl font-bold">POS Restaurant</span>
+            <span className="text-gray-900 text-xl font-bold">PRIMEWINGS POS</span>
           </div>
 
           <h2 className="text-gray-900 mb-1">{showForgot ? 'Recuperar contraseña' : 'Iniciar sesión'}</h2>

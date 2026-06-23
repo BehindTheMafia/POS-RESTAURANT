@@ -164,7 +164,7 @@ export const buildEscPosTicket = (
     : (sale.orders?.mesa?.nombre || 'N/A')
 
   const lines: string[] = [
-    options.restaurantName || 'POS Restaurant',
+    options.restaurantName || 'PRIMEWINGS POS',
     options.commercialName || '',
     line,
     `${title}: #${sale.orders?.id?.slice(0, 8) || sale.id.slice(0, 8)}`,
@@ -269,7 +269,7 @@ export const printTestPage = async (): Promise<void> => {
       }],
     },
     payments: [{ id: '1', monto: 11.5, referencia: null, nota: null, payment_method: { id: '1', nombre: 'Efectivo' } }],
-  } as SaleReportItem, { title: 'Prueba', restaurantName: 'POS Restaurant' })
+  } as SaleReportItem, { title: 'Prueba', restaurantName: 'PRIMEWINGS POS' })
 
   await printEscPos(test)
 }

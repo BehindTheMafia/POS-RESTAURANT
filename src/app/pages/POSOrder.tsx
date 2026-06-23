@@ -1035,7 +1035,12 @@ export function POSOrder() {
                             onClick={() => {
                               if (!hasStock) return;
                               const trimmed = noteText.trim();
-                              if (trimmed.toLowerCase().includes(salsa.nombre.toLowerCase())) return;
+                              if (trimmed.toLowerCase().includes(salsa.nombre.toLowerCase())) {
+                                const regex = new RegExp(`(,\\s*)?${salsa.nombre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s*,)?`, 'i');
+                                const next = trimmed.replace(regex, '').replace(/^,\s*/, '').trim();
+                                setNoteText(next);
+                                return;
+                              }
                               setNoteText(trimmed ? `${trimmed}, ${salsa.nombre}` : salsa.nombre);
                             }}
                             disabled={!hasStock}

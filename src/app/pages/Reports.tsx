@@ -617,7 +617,7 @@ export function Reports() {
   };
 
   const handleExportPDF = () => {
-    const rName = restaurant?.nombre || 'POS Restaurant';
+    const rName = restaurant?.nombre || 'PRIMEWINGS POS';
     const rows = sortedSales.map((s, index) => {
       const d = new Date(s.fecha);
       const dateStr = d.toLocaleDateString('es-NI');

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
-import { Users, Plus, RefreshCw, Pencil, Store, ShoppingBag } from 'lucide-react'
+import { Users, Plus, RefreshCw, Pencil, Store } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTables } from '../../hooks/useTables'
 import { useAuthContext } from '../AuthContext'
@@ -46,6 +46,7 @@ export function Tables() {
   const free = visibleTables.filter(t => t.estado === 'libre').length
   const occupied = visibleTables.filter(t => t.estado === 'ocupada').length
   const dirty = visibleTables.filter(t => t.estado === 'sucia').length
+  const displayTables = counterTable ? [counterTable, ...visibleTables] : visibleTables
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -163,26 +164,7 @@ export function Tables() {
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm mb-4">{error}</div>
       )}
 
-      {counterTable && (
-        <motion.button
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={() => handleTableClick(counterTable.id)}
-          className="w-full mb-6 flex items-center gap-4 p-5 sm:p-6 rounded-2xl border-2 border-brand bg-brand-muted hover:shadow-lg hover:brightness-[1.02] transition-all duration-200 cursor-pointer active:scale-[0.99] text-left"
-        >
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-brand/20 flex items-center justify-center shrink-0">
-            <Store size={28} className="text-brand" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-lg sm:text-xl font-black text-gray-900">Venta Mostrador</p>
-            <p className="text-sm text-gray-500 mt-0.5">Para llevar · Sin mesa asignada</p>
-          </div>
-          <div className="flex items-center gap-2 text-brand font-bold text-sm shrink-0">
-            <ShoppingBag size={18} />
-            <span className="hidden sm:inline">Iniciar venta</span>
-          </div>
-        </motion.button>
-      )}
+
 
       <Modal
         open={showCreate}
@@ -247,7 +229,7 @@ export function Tables() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           <LoadingSkeleton count={12} />
         </div>
-      ) : visibleTables.length === 0 ? (
+      ) : displayTables.length === 0 ? (
         <EmptyState
           icon={<Users size={28} className="text-primary" />}
           title="No hay mesas configuradas"
@@ -257,7 +239,8 @@ export function Tables() {
         />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {visibleTables.map((table, i) => {
+          {displayTables.map((table, i) => {
+            const isCounter = isCounterTable(table)
             const isOccupied = table.estado === 'ocupada'
             const isInactive = table.estado === 'inactiva'
             const isDirty = table.estado === 'sucia'
@@ -273,10 +256,16 @@ export function Tables() {
                   isInactive ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
                   : isDirty ? 'border-orange-300 bg-orange-50 cursor-pointer hover:border-orange-400'
                   : isOccupied ? 'border-warning/40 bg-warning-muted cursor-pointer hover:border-warning/60'
+                  : isCounter ? 'border-brand bg-brand-muted cursor-pointer hover:border-brand/70'
                   : 'border-gray-200 bg-white hover:border-gray-300 cursor-pointer'
                 }`}
               >
-                {isAdmin && (
+                {isCounter && (
+                  <div className="w-14 h-14 rounded-2xl bg-brand/20 flex items-center justify-center mb-3">
+                    <Store size={24} className="text-brand" />
+                  </div>
+                )}
+                {!isCounter && isAdmin && (
                   <span
                     role="button"
                     tabIndex={0}
@@ -288,10 +277,10 @@ export function Tables() {
                     <Pencil size={12} />
                   </span>
                 )}
-                {isOccupied && (
+                {!isCounter && isOccupied && (
                   <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-warning animate-pulse" />
                 )}
-                {isDirty && (
+                {!isCounter && isDirty && (
                   <button
                     onClick={e => handleMarkClean(table, e)}
                     title="Marcar como limpia"
@@ -300,26 +289,30 @@ export function Tables() {
                     Limpiar✓
                   </button>
                 )}
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${
-                  isDirty ? 'bg-orange-100'
-                  : isOccupied ? 'bg-warning-muted'
-                  : 'bg-gray-100'
-                }`}>
-                  <span className={`text-xl font-bold ${
-                    isDirty ? 'text-orange-500'
-                    : isOccupied ? 'text-warning'
-                    : 'text-gray-500'
-                  }`}>{table.numero}</span>
-                </div>
-                <p className={`font-semibold text-sm ${
-                  isDirty ? 'text-orange-600'
-                  : isOccupied ? 'text-warning'
-                  : 'text-gray-700'
-                }`}>{table.nombre}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Users size={11} className={isDirty ? 'text-orange-400' : isOccupied ? 'text-warning' : 'text-gray-400'} />
-                  <span className={`text-xs ${isDirty ? 'text-orange-400' : isOccupied ? 'text-warning' : 'text-gray-400'}`}>{table.capacidad} personas</span>
-                </div>
+                {!isCounter && (
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${
+                    isDirty ? 'bg-orange-100'
+                    : isOccupied ? 'bg-warning-muted'
+                    : 'bg-gray-100'
+                  }`}>
+                    <span className={`text-xl font-bold ${
+                      isDirty ? 'text-orange-500'
+                      : isOccupied ? 'text-warning'
+                      : 'text-gray-500'
+                    }`}>{table.numero}</span>
+                  </div>
+                )}
+                <p className={`font-semibold text-sm ${isCounter ? 'text-brand' : isDirty ? 'text-orange-600' : isOccupied ? 'text-warning' : 'text-gray-700'}`}>
+                  {isCounter ? 'Venta Mostrador' : table.nombre}
+                </p>
+                {isCounter && <p className="text-xs text-brand/70 mt-0.5">Para llevar</p>}
+                {!isCounter && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Users size={11} className={isDirty ? 'text-orange-400' : isOccupied ? 'text-warning' : 'text-gray-400'} />
+                    <span className={`text-xs ${isDirty ? 'text-orange-400' : isOccupied ? 'text-warning' : 'text-gray-400'}`}>{table.capacidad} personas</span>
+                  </div>
+                )}
+                {!isCounter && (
                 <span className={`mt-2 text-xs px-2 py-0.5 rounded-full font-medium ${
                   isInactive ? 'bg-gray-200 text-gray-600'
                   : isDirty ? 'bg-orange-100 text-orange-600'
@@ -328,6 +321,12 @@ export function Tables() {
                 }`}>
                   {isInactive ? 'Inactiva' : isDirty ? 'Sucia' : isOccupied ? 'Ocupada' : 'Libre'}
                 </span>
+                )}
+                {isCounter && (
+                <span className="mt-2 text-xs px-2 py-0.5 rounded-full font-medium bg-brand/10 text-brand">
+                  Disponible
+                </span>
+                )}
               </motion.button>
             )
           })}

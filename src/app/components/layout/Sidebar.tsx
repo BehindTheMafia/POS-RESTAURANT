@@ -58,8 +58,8 @@ export function Sidebar({ onClose }: SidebarProps) {
           <Flame size={18} className="text-brand-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sidebar-foreground leading-none" style={{ fontSize: '15px', fontWeight: 700 }}>POS Restaurant</p>
-          <p className="text-sidebar-foreground/40 leading-none mt-0.5" style={{ fontSize: '11px' }}>Sistema POS</p>
+          <p className="text-sidebar-foreground leading-none" style={{ fontSize: '15px', fontWeight: 700 }}>PRIMEWINGS POS</p>
+          <p className="text-sidebar-foreground/40 leading-none mt-0.5" style={{ fontSize: '11px' }}>Sistema PRIMEWINGS</p>
         </div>
       </div>
 

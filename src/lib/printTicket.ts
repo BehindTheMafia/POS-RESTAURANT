@@ -61,7 +61,7 @@ const printViaBrowser = (
         </style>
       </head>
       <body>
-        <div class="text-center title">${options.restaurantName || 'POS Restaurant'}</div>
+        <div class="text-center title">${options.restaurantName || 'PRIMEWINGS POS'}</div>
         <div class="text-center">${options.commercialName || ''}</div>
         <div class="divider"></div>
         <div><b>${title}:</b> #${sale.orders?.id?.slice(0, 8) || sale.id.slice(0, 8)}</div>

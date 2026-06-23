@@ -30,10 +30,6 @@ export function Dashboard() {
       sub: `${stats.ventas_count} transacciones`, icon: <TrendingUp size={20} />,
     },
     {
-      label: 'Ticket promedio', value: fmt(stats.ticket_promedio),
-      sub: 'Por venta completada', icon: <DollarSign size={20} />, color: '#3B82F6', bg: '#3B82F615',
-    },
-    {
       label: 'Descuentos', value: fmt(stats.descuentos_total),
       sub: 'Total descontado', icon: <Tag size={20} />, color: '#8B5CF6', bg: '#8B5CF615',
     },
