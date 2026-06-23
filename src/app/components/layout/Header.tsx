@@ -46,7 +46,7 @@ export function Header({ onToggleSidebar, sidebarOpen }: HeaderProps) {
       .then(({ data }) => {
         if (!cancelled) {
           const name = data?.nombre ?? null
-          setTableName(name && isCounterTable(data as { tipo?: string; nombre?: string }) ? 'Mostrador' : name)
+          setTableName(name && isCounterTable(data as any) ? 'Mostrador' : name)
         }
       })
 

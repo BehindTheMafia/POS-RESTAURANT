@@ -214,6 +214,7 @@ export function POSOrder() {
             precio_unitario: product.precio,
             subtotal: product.precio,
             observaciones: null,
+            notas: null,
             created_at: new Date().toISOString(),
           } as typeof items[0],
         ]
@@ -297,7 +298,7 @@ export function POSOrder() {
       // ── Client-side stock re-validation with fresh DB data ────────────────
       // Protects against stale local state (e.g. product restocked or depleted
       // by another cashier between adding items and confirming the sale).
-      const productIds = items.map(i => i.product_id)
+      const productIds = items.map(i => i.product_id).filter((id): id is string => id !== null)
 
       const [{ data: freshProducts }, { data: freshInventory }, { data: allRecipes }] =
         await Promise.all([

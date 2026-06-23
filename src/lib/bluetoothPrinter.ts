@@ -82,7 +82,7 @@ export const connectPrinter = async (): Promise<BluetoothDevice> => {
     throw new Error('Web Bluetooth no está disponible. Use Chrome o Edge con HTTPS.')
   }
 
-  const device = await navigator.bluetooth.requestDevice({
+  const device = await navigator.bluetooth!.requestDevice({
     acceptAllDevices: true,
     optionalServices: COMMON_SERVICE_UUIDS,
   })
@@ -109,7 +109,7 @@ export const reconnectPrinter = async (): Promise<boolean> => {
   if (!savedId) return false
 
   try {
-    const devices = await navigator.bluetooth.getDevices()
+    const devices = await navigator.bluetooth!.getDevices()
     const device = devices.find(d => d.id === savedId)
     if (!device?.gatt) return false
 

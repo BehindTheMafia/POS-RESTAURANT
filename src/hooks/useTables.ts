@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, RESTAURANT_ID } from '../lib/supabase';
-import type { Tables, TablesInsert, TablesUpdate } from '../lib/database.types';
-import { isCounterTable } from '../lib/pos';
+import type { TablesInsert, TablesUpdate } from '../lib/database.types';
+import { isCounterTable, type RestaurantTable } from '../lib/pos';
 
-export type RestaurantTable = Tables<'tables_restaurant'>;
 
 const applyOpenOrderStatus = (
   tables: RestaurantTable[],
@@ -45,7 +44,7 @@ export function useTables() {
       (ordersRes.data ?? []).map(o => o.mesa_id).filter((id): id is string => !!id)
     )
 
-    setTables(applyOpenOrderStatus(tablesRes.data ?? [], openOrderMesaIds))
+    setTables(applyOpenOrderStatus((tablesRes.data ?? []) as RestaurantTable[], openOrderMesaIds))
     setLoading(false)
   }, []);
 
