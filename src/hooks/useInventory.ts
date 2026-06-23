@@ -54,30 +54,6 @@ export function useInventory() {
     await fetchItems();
   }, [fetchItems]);
 
-  const adjustStock = useCallback(async (id: string, newStock: number, userId: string) => {
-    const item = items.find(i => i.id === id);
-    const oldStock = item?.stock_actual ?? 0;
-    
-    const { error: err } = await supabase
-      .from('inventory_items')
-      .update({ stock_actual: newStock })
-      .eq('id', id);
-    if (err) throw err;
-
-    // Auditoría manual del ajuste
-    await supabase.from('audit_logs').insert({
-      restaurant_id: RESTAURANT_ID,
-      usuario_id: userId,
-      accion: 'AJUSTE_INVENTARIO',
-      tabla: 'inventory_items',
-      registro_id: id,
-      valor_anterior: { stock_actual: oldStock },
-      valor_nuevo: { stock_actual: newStock },
-    });
-
-    await fetchItems();
-  }, [items, fetchItems]);
-
   const deactivateItem = useCallback(async (id: string) => {
     const { error: err } = await supabase
       .from('inventory_items')
@@ -87,5 +63,5 @@ export function useInventory() {
     await fetchItems();
   }, [fetchItems]);
 
-  return { items, lowItems, loading, error, refetch: fetchItems, createItem, updateItem, adjustStock, deactivateItem };
+  return { items, lowItems, loading, error, refetch: fetchItems, createItem, updateItem, deactivateItem };
 }

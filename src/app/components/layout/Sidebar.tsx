@@ -1,8 +1,8 @@
 import { NavLink, useNavigate } from 'react-router'
 import {
-  LayoutDashboard, UtensilsCrossed, CreditCard, Package,
+  LayoutDashboard, UtensilsCrossed, Package,
   FlaskConical, BarChart3, Users, Settings, ScrollText,
-  LogOut, Flame, ChevronRight, X
+  LogOut, Flame, ChevronRight
 } from 'lucide-react'
 import { useAuthContext } from '../../AuthContext'
 import { motion } from 'motion/react'
@@ -17,7 +17,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/dashboard',     icon: <LayoutDashboard size={18} />, label: 'Dashboard',      permission: 'dashboard.view' },
   { to: '/pos',           icon: <UtensilsCrossed size={18} />, label: 'Mesas / POS',    permission: 'pos.view' },
-  { to: '/caja',          icon: <CreditCard size={18} />,      label: 'Caja',           permission: 'cash.manage' },
   { to: '/productos',     icon: <Package size={18} />,         label: 'Productos',      permission: 'products.manage' },
   { to: '/inventario',    icon: <FlaskConical size={18} />,    label: 'Inventario',     permission: 'inventory.view' },
   { to: '/reportes',      icon: <BarChart3 size={18} />,       label: 'Reportes',       permission: 'reports.view' },
@@ -62,12 +61,6 @@ export function Sidebar({ onClose }: SidebarProps) {
           <p className="text-sidebar-foreground leading-none" style={{ fontSize: '15px', fontWeight: 700 }}>POS Restaurant</p>
           <p className="text-sidebar-foreground/40 leading-none mt-0.5" style={{ fontSize: '11px' }}>Sistema POS</p>
         </div>
-        <button
-          onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/10 transition-colors shrink-0"
-        >
-          <X size={16} />
-        </button>
       </div>
 
       {/* Navigation */}

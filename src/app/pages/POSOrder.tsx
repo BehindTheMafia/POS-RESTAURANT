@@ -107,7 +107,8 @@ export function POSOrder() {
   }, [getProductStock]);
 
   const subtotal = cartItems.reduce((s, i) => s + i.subtotal, 0);
-  const base = subtotal - descuento;
+  const descuentoAmount = subtotal * descuento / 100;
+  const base = subtotal - descuentoAmount;
   const iva = Math.round(base * ivaPercent / 100 * 100) / 100;
   const total = base + iva;
   const canComplete = cartItems.length > 0 && hasCashRegister
@@ -364,7 +365,7 @@ export function POSOrder() {
         currentOrder.id,
         user.id,
         normalized,
-        descuento,
+        descuentoAmount,
         ivaPercent
       );
 
@@ -771,86 +772,83 @@ export function POSOrder() {
                     animate={{ opacity: isOptimistic ? 0.75 : 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.88, x: 24, transition: { duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] } }}
                     transition={{ type: 'spring', stiffness: 480, damping: 26 }}
-                    className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-2xl mb-2 last:mb-0 shadow-sm"
+                    className="p-3 bg-white border border-gray-100 rounded-2xl mb-2 last:mb-0 shadow-sm space-y-2"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 overflow-hidden shrink-0">
-                      {product?.imagen_url ? (
-                        <img src={product.imagen_url} alt={product?.nombre} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-brand-muted text-brand flex items-center justify-center text-[11px] font-black">
-                          {initials}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate leading-tight">
-                        {product?.nombre ?? 'Producto'}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => { setEditingNoteItemId(item.id); setNoteText((item as any).notas ?? ''); }}
-                        className={`mt-1 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold transition-all duration-200 cursor-pointer w-fit ${
-                          (item as any).notas
-                            ? 'bg-brand/10 text-brand hover:bg-brand/20'
-                            : 'bg-gray-100 text-gray-550 hover:bg-brand/10 hover:text-brand'
-                        }`}
-                      >
-                        <MessageSquare size={11} className={(item as any).notas ? 'text-brand' : 'text-gray-450'} />
-                        <span className="truncate max-w-[100px]">
-                          {(item as any).notas ? (item as any).notas : '+ Nota'}
-                        </span>
-                      </button>
-                      <p className="text-[11px] text-gray-450 mt-0.5">
-                        {currency} {item.precio_unitario.toFixed(2)} c/u
-                      </p>
-                    </div>
-
-                    <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 shrink-0">
-                      <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.82 }}
-                        onClick={() => handleQtyChange(item.id, -1, item.cantidad, item.precio_unitario)}
-                        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-destructive active:scale-95 transition-colors cursor-pointer rounded-l-xl"
-                        aria-label="Reducir cantidad"
-                      >
-                        <Minus size={12} className="stroke-[2.5px]" />
-                      </motion.button>
-                      <motion.span
-                        key={item.cantidad}
-                        initial={{ scale: 1.5, opacity: 0.4 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-                        className="text-sm font-black text-gray-900 w-7 text-center tabular-nums"
-                      >
-                        {item.cantidad}
-                      </motion.span>
-                      <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.82 }}
-                        onClick={() => handleQtyChange(item.id, 1, item.cantidad, item.precio_unitario)}
-                        disabled={isOptimistic || (product ? isMaxed : true)}
-                        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-brand active:scale-95 transition-colors cursor-pointer rounded-r-xl disabled:opacity-30"
-                        aria-label="Aumentar cantidad"
-                      >
-                        <Plus size={12} className="stroke-[2.5px]" />
-                      </motion.button>
-                    </div>
-
-                    <p className="text-sm font-black text-gray-900 w-[4.5rem] text-right shrink-0 tabular-nums">
-                      {currency} {item.subtotal.toFixed(2)}
+                    <p className="text-sm font-bold text-gray-900 leading-tight">
+                      {product?.nombre ?? 'Producto'}
                     </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gray-50 overflow-hidden shrink-0">
+                        {product?.imagen_url ? (
+                          <img src={product.imagen_url} alt={product?.nombre} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-brand-muted text-brand flex items-center justify-center text-[11px] font-black">
+                            {initials}
+                          </div>
+                        )}
+                      </div>
 
-                    <motion.button
+                      <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 shrink-0">
+                        <motion.button
+                          type="button"
+                          whileTap={{ scale: 0.82 }}
+                          onClick={() => handleQtyChange(item.id, -1, item.cantidad, item.precio_unitario)}
+                          className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-destructive active:scale-95 transition-colors cursor-pointer rounded-l-xl"
+                          aria-label="Reducir cantidad"
+                        >
+                          <Minus size={16} className="stroke-[2.5px]" />
+                        </motion.button>
+                        <motion.span
+                          key={item.cantidad}
+                          initial={{ scale: 1.5, opacity: 0.4 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          className="text-base font-black text-gray-900 w-8 text-center tabular-nums"
+                        >
+                          {item.cantidad}
+                        </motion.span>
+                        <motion.button
+                          type="button"
+                          whileTap={{ scale: 0.82 }}
+                          onClick={() => handleQtyChange(item.id, 1, item.cantidad, item.precio_unitario)}
+                          disabled={isOptimistic || (product ? isMaxed : true)}
+                          className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-brand active:scale-95 transition-colors cursor-pointer rounded-r-xl disabled:opacity-30"
+                          aria-label="Aumentar cantidad"
+                        >
+                          <Plus size={16} className="stroke-[2.5px]" />
+                        </motion.button>
+                      </div>
+
+                      <p className="text-sm font-black text-gray-900 w-[4.5rem] text-right shrink-0 tabular-nums">
+                        {currency} {item.subtotal.toFixed(2)}
+                      </p>
+
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.82 }}
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="w-11 h-11 rounded-xl text-gray-300 hover:text-destructive hover:bg-destructive-muted flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                        title="Eliminar"
+                        aria-label="Eliminar producto"
+                      >
+                        <Trash2 size={16} />
+                      </motion.button>
+                    </div>
+
+                    <button
                       type="button"
-                      whileTap={{ scale: 0.82 }}
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="w-8 h-8 rounded-lg text-gray-300 hover:text-destructive hover:bg-destructive-muted flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                      title="Eliminar"
-                      aria-label="Eliminar producto"
+                      onClick={() => { setEditingNoteItemId(item.id); setNoteText((item as any).notas ?? ''); }}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer w-full min-h-[44px] ${
+                        (item as any).notas
+                          ? 'bg-brand/10 text-brand hover:bg-brand/20'
+                          : 'bg-gray-100 text-gray-550 hover:bg-brand/10 hover:text-brand'
+                      }`}
                     >
-                      <Trash2 size={14} />
-                    </motion.button>
+                      <MessageSquare size={18} className={(item as any).notas ? 'text-brand' : 'text-gray-450'} />
+                      <span className="truncate">
+                        {(item as any).notas ? (item as any).notas : 'Agregar nota'}
+                      </span>
+                    </button>
                   </motion.div>
                 );
               })}
@@ -870,25 +868,35 @@ export function POSOrder() {
               <span>IVA ({ivaPercent}%)</span>
               <span className="font-semibold text-gray-800 tabular-nums">{cartItems.length > 0 ? `${currency} ${iva.toFixed(2)}` : '—'}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-gray-500 pt-1">
-              <span>Descuento</span>
-              <div className="relative w-24">
-                <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] ${cartItems.length === 0 ? 'opacity-50' : ''}`}>{currency}</span>
+            <div className="pt-1">
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 focus-within:border-brand transition-colors">
+                <span className="text-xs text-gray-500 shrink-0">Descuento</span>
+                <span className="text-gray-300 text-xs">·</span>
                 <input
                   type="number"
                   min="0"
-                  max={subtotal}
+                  max={100}
                   value={cartItems.length > 0 ? (descuento || '') : ''}
                   onChange={e => setDescuento(parseFloat(e.target.value) || 0)}
                   disabled={cartItems.length === 0}
-                  className="w-full text-right border border-gray-200 rounded-lg pl-6 pr-2 py-1 text-xs font-bold outline-none focus:border-brand bg-white disabled:opacity-50"
+                  className="flex-1 text-right text-xs font-bold text-gray-800 outline-none bg-transparent disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   placeholder="0"
                 />
+                <span className="text-xs text-gray-400 shrink-0">%</span>
+                {descuento > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setDescuento(0)}
+                    className="text-gray-300 hover:text-destructive transition-colors cursor-pointer shrink-0"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             </div>
-            <div className="flex justify-between items-baseline pt-2 mt-1 border-t border-gray-200/80">
-              <span className="text-sm font-bold text-gray-800">Total</span>
-              <span className="text-2xl font-black text-brand tabular-nums">
+            <div className="flex justify-between pt-2 mt-1 border-t border-gray-200/80">
+              <span className="text-xs font-bold text-gray-800">Total</span>
+              <span className="text-xs font-bold text-brand tabular-nums">
                 {cartItems.length > 0 ? `${currency} ${total.toFixed(2)}` : '—'}
               </span>
             </div>

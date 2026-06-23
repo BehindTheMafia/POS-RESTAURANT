@@ -1,6 +1,6 @@
 import React, { useState, type FormEvent } from 'react';
 import { motion } from 'motion/react';
-import { FlaskConical, Plus, AlertTriangle, Edit2, RefreshCw, Save, X, Power } from 'lucide-react';
+import { FlaskConical, Plus, AlertTriangle, Edit2, RefreshCw, X, Power } from 'lucide-react';
 import { useInventory, type InventoryItem } from '../../hooks/useInventory';
 import { useAuthContext } from '../AuthContext';
 import { useRestaurant } from '../../hooks/useRestaurant';
@@ -9,17 +9,15 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/button';
 
 export function Inventory() {
-  const { items, lowItems, loading, error, refetch, createItem, updateItem, adjustStock } = useInventory();
+  const { items, lowItems, loading, error, refetch, createItem, updateItem } = useInventory();
   const { user } = useAuthContext();
   const { restaurant } = useRestaurant();
   const currency = restaurant?.moneda ?? 'C$';
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [newStockValues, setNewStockValues] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ nombre: '', unidad: '', stock_actual: '', stock_minimo: '', costo_unitario: '' });
   const [savingCreate, setSavingCreate] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [savingAdjust, setSavingAdjust] = useState(false);
   const [filter, setFilter] = useState<'all' | 'low'>('all');
 
   const [showEdit, setShowEdit] = useState(false);
@@ -91,21 +89,6 @@ export function Inventory() {
       toast.error(err.message);
     } finally {
       setSavingCreate(false);
-    }
-  }
-
-  async function handleAdjustStock(itemId: string) {
-    const val = parseFloat(newStockValues[itemId]);
-    if (isNaN(val) || val < 0) { toast.error('Valor inválido'); return; }
-    setSavingAdjust(true);
-    try {
-      await adjustStock(itemId, val, user?.id ?? '');
-      setEditingId(null);
-      toast.success('Stock actualizado');
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setSavingAdjust(false);
     }
   }
 
@@ -297,7 +280,6 @@ export function Inventory() {
                   <th className="text-center text-xs text-gray-500 font-medium px-5 py-3.5">Stock Mínimo</th>
                   <th className="text-right text-xs text-gray-500 font-medium px-5 py-3.5">Costo Unit.</th>
                   <th className="text-center text-xs text-gray-500 font-medium px-5 py-3.5">Estado</th>
-                  <th className="text-center text-xs text-gray-500 font-medium px-5 py-3.5">Ajustar</th>
                   <th className="text-center text-xs text-gray-500 font-medium px-5 py-3.5">Acciones</th>
                 </tr>
               </thead>
@@ -331,43 +313,6 @@ export function Inventory() {
                         }`}>
                           {!item.activo ? 'Inactivo' : isLow ? 'Bajo' : 'OK'}
                         </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {editingId === item.id ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number" min="0" step="0.001"
-                              value={newStockValues[item.id] ?? item.stock_actual}
-                              onChange={e => setNewStockValues(v => ({ ...v, [item.id]: e.target.value }))}
-                              className="w-20 border border-brand rounded-lg px-2 py-1 text-xs outline-none"
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleAdjustStock(item.id)}
-                              disabled={savingAdjust}
-                              className="text-brand hover:opacity-80 disabled:opacity-50 cursor-pointer"
-                            >
-                              {savingAdjust
-                                ? <span className="w-3.5 h-3.5 border-2 border-brand/40 border-t-brand rounded-full animate-spin inline-block" />
-                                : <Save size={14} />}
-                            </button>
-                            <button onClick={() => setEditingId(null)}
-                              className="text-gray-400 hover:text-gray-600">
-                              <X size={14} />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingId(item.id);
-                              setNewStockValues(v => ({ ...v, [item.id]: String(item.stock_actual) }));
-                            }}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 mx-auto transition-colors"
-                            disabled={!item.activo}
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                        )}
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-1.5">

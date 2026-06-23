@@ -8,7 +8,6 @@ import { supabase } from '../../../lib/supabase'
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/pos': 'Mesas',
-  '/caja': 'Caja',
   '/productos': 'Productos',
   '/inventario': 'Inventario',
   '/reportes': 'Reportes',

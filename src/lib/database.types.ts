@@ -150,41 +150,26 @@ export type Database = {
         Row: {
           estado: string
           fecha_apertura: string
-          fecha_cierre: string | null
           id: string
           monto_inicial: number
           restaurant_id: string
           usuario_id: string | null
-          monto_cierre_real: number | null
-          monto_cierre_esperado: number | null
-          diferencia: number | null
-          detalles_cierre: Json | null
         }
         Insert: {
           estado?: string
           fecha_apertura?: string
-          fecha_cierre?: string | null
           id?: string
           monto_inicial?: number
           restaurant_id: string
           usuario_id?: string | null
-          monto_cierre_real?: number | null
-          monto_cierre_esperado?: number | null
-          diferencia?: number | null
-          detalles_cierre?: Json | null
         }
         Update: {
           estado?: string
           fecha_apertura?: string
-          fecha_cierre?: string | null
           id?: string
           monto_inicial?: number
           restaurant_id?: string
           usuario_id?: string | null
-          monto_cierre_real?: number | null
-          monto_cierre_esperado?: number | null
-          diferencia?: number | null
-          detalles_cierre?: Json | null
         }
         Relationships: [
           {
@@ -1095,28 +1080,6 @@ export type Database = {
       }
     }
     Views: {
-      v_cash_flow: {
-        Row: {
-          estado: string | null
-          fecha_apertura: string | null
-          fecha_cierre: string | null
-          monto_inicial: number | null
-          register_id: string | null
-          restaurant_id: string | null
-          saldo_actual: number | null
-          total_egresos: number | null
-          total_ingresos: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cash_registers_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       v_daily_sales: {
         Row: {
           dia: string | null
@@ -1257,10 +1220,6 @@ export type Database = {
       }
       delete_sale: {
         Args: { p_sale_id: string; p_usuario_id: string }
-        Returns: Json
-      }
-      close_cash_register: {
-        Args: { p_register_id: string; p_usuario_id: string }
         Returns: Json
       }
       complete_sale: {

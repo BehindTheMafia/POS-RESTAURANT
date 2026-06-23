@@ -57,41 +57,9 @@ export function useCashRegister() {
     return data as string;
   }, [fetchRegister]);
 
-  const closeRegister = useCallback(async (registerId: string, usuarioId: string) => {
-    const { data, error: err } = await supabase.rpc('close_cash_register', {
-      p_register_id: registerId,
-      p_usuario_id:  usuarioId,
-    });
-    if (err) throw err;
-    await fetchRegister();
-    return data as { total_ventas: number; total_ingresos: number; total_egresos: number; balance: number };
-  }, [fetchRegister]);
-
-  const closeRegisterDetailed = useCallback(async (
-    registerId: string,
-    montoReal: number,
-    montoEsperado: number,
-    diferencia: number,
-    detalles: any
-  ) => {
-    const { error: err } = await supabase
-      .from('cash_registers')
-      .update({
-        estado: 'cerrada',
-        fecha_cierre: new Date().toISOString(),
-        monto_cierre_real: montoReal,
-        monto_cierre_esperado: montoEsperado,
-        diferencia: diferencia,
-        detalles_cierre: detalles,
-      })
-      .eq('id', registerId);
-    if (err) throw err;
-    await fetchRegister();
-  }, [fetchRegister]);
-
   const addMovement = useCallback(async (
     registerId: string,
-    tipo: 'ingreso' | 'egreso',
+    tipo: 'ingreso' | 'egreso' | 'propina',
     concepto: string,
     monto: number,
     usuarioId: string
@@ -110,16 +78,18 @@ export function useCashRegister() {
   }, [fetchRegister]);
 
   const getTotals = useCallback(() => {
-    if (!activeRegister) return { ingresos: 0, egresos: 0, saldo: 0 };
+    if (!activeRegister) return { ingresos: 0, egresos: 0, propinas: 0, saldo: 0 };
     const movs = activeRegister.cash_movements ?? [];
     const ingresos = movs.filter(m => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0);
+    const propinas = movs.filter(m => m.tipo === 'propina').reduce((s, m) => s + m.monto, 0);
     const egresos = movs.filter(m => m.tipo === 'egreso').reduce((s, m) => s + m.monto, 0);
     return {
       ingresos,
       egresos,
-      saldo: activeRegister.monto_inicial + ingresos - egresos,
+      propinas,
+      saldo: activeRegister.monto_inicial + ingresos + propinas - egresos,
     };
   }, [activeRegister]);
 
-  return { activeRegister, history, loading, error, refetch: fetchRegister, openRegister, closeRegister, closeRegisterDetailed, addMovement, getTotals };
+  return { activeRegister, history, loading, error, refetch: fetchRegister, openRegister, addMovement, getTotals };
 }

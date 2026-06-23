@@ -250,7 +250,7 @@ export function Settings() {
         subtitle="Gestiona tu restaurante"
         actions={
           <Button variant="outline" size="iconTouch" onClick={refetch} aria-label="Actualizar">
-            <RefreshCw size={16} />
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </Button>
         }
       />

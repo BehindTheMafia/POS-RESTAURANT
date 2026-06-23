@@ -10,7 +10,6 @@ import { HomeRedirect } from './HomeRedirect'
 const Dashboard    = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
 const Tables       = lazy(() => import('./pages/Tables').then(m => ({ default: m.Tables })))
 const POSOrder     = lazy(() => import('./pages/POSOrder').then(m => ({ default: m.POSOrder })))
-const CashRegister = lazy(() => import('./pages/CashRegister').then(m => ({ default: m.CashRegister })))
 const Products     = lazy(() => import('./pages/Products').then(m => ({ default: m.Products })))
 const Inventory    = lazy(() => import('./pages/Inventory').then(m => ({ default: m.Inventory })))
 const Reports      = lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })))
@@ -46,10 +45,6 @@ export const router = createBrowserRouter([
       {
         path: 'pos/:tableId',
         element: <ProtectedRoute requiredPermission="pos.view"><POSOrder /></ProtectedRoute>,
-      },
-      {
-        path: 'caja',
-        element: <ProtectedRoute requiredPermission="cash.manage"><CashRegister /></ProtectedRoute>,
       },
       {
         path: 'productos',

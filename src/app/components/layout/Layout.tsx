@@ -5,7 +5,7 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import {
   pageVariants, fadeVariants, slideLeftVariants,
-  t, spring,
+  t, ease,
 } from '../../../lib/animations'
 
 // Lightweight skeleton shown while a lazy page chunk is downloading.
@@ -41,11 +41,15 @@ export function Layout() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop sidebar */}
-      {sidebarOpen && (
-        <div className="hidden lg:block shrink-0 h-full">
+      <div className="hidden lg:block shrink-0 h-full">
+        <motion.div
+          animate={{ width: sidebarOpen ? 256 : 0 }}
+          transition={{ duration: 0.2, ease: ease.out }}
+          className="h-full overflow-hidden"
+        >
           <Sidebar onClose={() => setSidebarOpen(false)} />
-        </div>
-      )}
+        </motion.div>
+      </div>
 
       {/* Mobile backdrop */}
       <AnimatePresence>
@@ -72,7 +76,7 @@ export function Layout() {
             initial="initial"
             animate="animate"
             exit="exit"
-            transition={spring.drawer}
+            transition={{ duration: 0.2, ease: ease.out }}
             className="fixed left-0 top-0 h-full z-50 lg:hidden"
           >
             <Sidebar onClose={() => setSidebarOpen(false)} />
