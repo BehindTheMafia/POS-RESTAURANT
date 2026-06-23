@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { supabase, RESTAURANT_ID } from '../lib/supabase'
+import { getLocalRangeBoundsISO, coerceDateISO } from '../lib/dates'
 import type { Tables } from '../lib/database.types'
 
 export type AuditLog = Tables<'audit_logs'> & {
@@ -38,8 +39,13 @@ export function useAudit(pageSize = 50) {
     if (filters?.tabla) query = query.eq('tabla', filters.tabla)
     if (filters?.accion) query = query.ilike('accion', `%${filters.accion}%`)
     if (filters?.usuarioId) query = query.eq('usuario_id', filters.usuarioId)
-    if (filters?.dateFrom) query = query.gte('fecha', `${filters.dateFrom}T00:00:00`)
-    if (filters?.dateTo) query = query.lte('fecha', `${filters.dateTo}T23:59:59`)
+    if (filters?.dateFrom || filters?.dateTo) {
+      const bounds = getLocalRangeBoundsISO(
+        coerceDateISO(filters?.dateFrom),
+        coerceDateISO(filters?.dateTo),
+      )
+      query = query.gte('fecha', bounds.start).lte('fecha', bounds.end)
+    }
 
     const { data, error: err, count } = await query
     if (err) setError(err.message)

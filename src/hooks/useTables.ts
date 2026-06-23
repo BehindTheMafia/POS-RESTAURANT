@@ -1,8 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, RESTAURANT_ID } from '../lib/supabase';
 import type { Tables, TablesInsert, TablesUpdate } from '../lib/database.types';
+import { isCounterTable } from '../lib/pos';
 
 export type RestaurantTable = Tables<'tables_restaurant'>;
+
+const applyOpenOrderStatus = (
+  tables: RestaurantTable[],
+  openOrderMesaIds: Set<string>
+): RestaurantTable[] =>
+  tables.map(t => {
+    if (t.estado === 'inactiva' || isCounterTable(t)) return t
+    if (openOrderMesaIds.has(t.id)) return { ...t, estado: 'ocupada' }
+    return t
+  })
 
 export function useTables() {
   const [tables, setTables] = useState<RestaurantTable[]>([]);
@@ -11,15 +22,31 @@ export function useTables() {
   const channelIdRef = useRef(`tables-realtime-${crypto.randomUUID()}`);
 
   const fetchTables = useCallback(async () => {
-    const { data, error: err } = await supabase
-      .from('tables_restaurant')
-      .select('*')
-      .eq('restaurant_id', RESTAURANT_ID)
-      .order('numero', { ascending: true });
+    const [tablesRes, ordersRes] = await Promise.all([
+      supabase
+        .from('tables_restaurant')
+        .select('*')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .order('numero', { ascending: true }),
+      supabase
+        .from('orders')
+        .select('mesa_id')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('estado', 'abierto'),
+    ]);
 
-    if (err) { setError(err.message); }
-    else { setTables(data ?? []); }
-    setLoading(false);
+    if (tablesRes.error) {
+      setError(tablesRes.error.message)
+      setLoading(false)
+      return
+    }
+
+    const openOrderMesaIds = new Set(
+      (ordersRes.data ?? []).map(o => o.mesa_id).filter((id): id is string => !!id)
+    )
+
+    setTables(applyOpenOrderStatus(tablesRes.data ?? [], openOrderMesaIds))
+    setLoading(false)
   }, []);
 
   useEffect(() => {
@@ -35,21 +62,17 @@ export function useTables() {
           table: 'tables_restaurant',
           filter: `restaurant_id=eq.${RESTAURANT_ID}`,
         },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            setTables(prev =>
-              prev.map(t => t.id === (payload.new as RestaurantTable).id
-                ? payload.new as RestaurantTable : t
-              )
-            );
-          } else if (payload.eventType === 'INSERT') {
-            setTables(prev => [...prev, payload.new as RestaurantTable]
-              .sort((a, b) => a.numero - b.numero)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setTables(prev => prev.filter(t => t.id !== (payload.old as RestaurantTable).id));
-          }
-        }
+        () => { fetchTables() }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `restaurant_id=eq.${RESTAURANT_ID}`,
+        },
+        () => { fetchTables() }
       )
       .subscribe();
 

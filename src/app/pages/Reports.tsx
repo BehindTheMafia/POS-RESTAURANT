@@ -13,6 +13,7 @@ import { useExpenses, type Expense } from '../../hooks/useExpenses';
 import { useRestaurant } from '../../hooks/useRestaurant';
 import { useAuthContext } from '../AuthContext';
 import { toast } from 'sonner';
+import { getLocalDateISO, getLocalDateFromISO, coerceDateISO } from '../../lib/dates';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, PieChart, Pie, Cell, Legend
@@ -22,7 +23,7 @@ type ReportRange = 'today' | 'week' | 'month' | 'custom';
 
 function getDateRange(range: ReportRange, customFrom?: string, customTo?: string) {
   const today = new Date();
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const fmt = (d: Date) => getLocalDateISO(d);
 
   switch (range) {
     case 'today':
@@ -37,7 +38,7 @@ function getDateRange(range: ReportRange, customFrom?: string, customTo?: string
       return { from: fmt(start), to: fmt(today) };
     }
     case 'custom':
-      return { from: customFrom ?? fmt(today), to: customTo ?? fmt(today) };
+      return { from: coerceDateISO(customFrom), to: coerceDateISO(customTo) };
     default:
       return { from: fmt(today), to: fmt(today) };
   }
@@ -69,6 +70,7 @@ export function Reports() {
   const {
     sales,
     loading: salesLoading,
+    error: salesError,
     cajeros,
     mesas,
     paymentMethods,
@@ -85,6 +87,8 @@ export function Reports() {
     total: expensesTotal,
     getByCategory,
     loading: expLoading,
+    error: expError,
+    refetch: refetchExpenses,
     createExpense,
     updateExpense,
     deleteExpense
@@ -100,9 +104,23 @@ export function Reports() {
   const handleDialogConfirm = async (input?: string) => {
     if (!dialog) return
     setDialogLoading(true)
-    try { await dialog.onConfirm(input) }
-    finally { setDialogLoading(false); setDialog(null) }
+    try {
+      await dialog.onConfirm(input)
+      setDialog(null)
+    } catch (err: any) {
+      toast.error(err?.message || 'Error al ejecutar la acción')
+    } finally {
+      setDialogLoading(false)
+    }
   }
+
+  // Pre-fill custom date inputs when switching to personalizado
+  useEffect(() => {
+    if (activeRange !== 'custom') return
+    const today = getLocalDateISO()
+    if (!customFrom) setCustomFrom(today)
+    if (!customTo) setCustomTo(today)
+  }, [activeRange, customFrom, customTo])
 
   // Filter States
   const [filterStatus, setFilterStatus] = useState('Todos');
@@ -127,10 +145,11 @@ export function Reports() {
   const fmt = (n: number) =>
     `${currency} ${n.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  // Reset pagination on filter change
+  // Reset pagination on filter or range change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterStatus, filterPaymentMethod, filterCajero, filterMesa, searchTerm]);
+    setProdPage(1);
+  }, [filterStatus, filterPaymentMethod, filterCajero, filterMesa, searchTerm, from, to]);
 
   // Apply Filters to Sales list
   const filteredSales = useMemo(() => {
@@ -278,12 +297,12 @@ export function Reports() {
   const chartSalesByDay = useMemo(() => {
     const days: Record<string, number> = {};
     sales.filter(s => s.estado === 'completada').forEach(s => {
-      const d = s.fecha.split('T')[0];
+      const d = getLocalDateFromISO(s.fecha);
       days[d] = (days[d] ?? 0) + Number(s.total);
     });
     return Object.entries(days)
-      .map(([date, total]) => ({ date: date.slice(5), total }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .map(([date, total]) => ({ date: date.slice(5), sortKey: date, total }))
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   }, [sales]);
 
   const chartSalesByPayment = useMemo(() => {
@@ -337,6 +356,7 @@ export function Reports() {
         descripcion: gForm.descripcion,
         categoria: gForm.categoria || 'otros',
         fecha: gForm.fecha ? `${gForm.fecha}T12:00:00` : new Date().toISOString(),
+        usuario_id: user?.id ?? null,
       });
       setShowCreateGasto(false);
       setGForm({ monto: '', descripcion: '', categoria: '', fecha: '' });
@@ -480,8 +500,7 @@ export function Reports() {
       inputRequired: true,
       onConfirm: async (motivo) => {
         if (!motivo?.trim()) {
-          toast.error('Motivo requerido para proceder con la anulación')
-          return
+          throw new Error('Motivo requerido para proceder con la anulación')
         }
         await cancelSale(sale.id, motivo.trim(), user?.id || '')
         toast.success('Venta anulada correctamente y stock de inventario revertido')
@@ -699,7 +718,7 @@ export function Reports() {
       monto: '',
       descripcion: '',
       categoria: 'insumos',
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: getLocalDateISO(),
     });
     setShowCreateGasto(true);
   }
@@ -725,7 +744,7 @@ export function Reports() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-center">
-          <button onClick={() => { refetchSales(); toast.success('Datos actualizados'); }}
+          <button onClick={() => { refetchSales(); refetchExpenses(); toast.success('Datos actualizados'); }}
             className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
             <RefreshCw size={18} className={`text-gray-600 dark:text-gray-300 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -739,6 +758,13 @@ export function Reports() {
           )}
         </div>
       </div>
+
+      {salesError && (
+        <div className="flex items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive-muted px-4 py-3 text-sm font-semibold text-destructive">
+          <AlertTriangle size={16} />
+          Error al cargar ventas: {salesError}
+        </div>
+      )}
 
       {/* Range Select */}
       <div className="flex flex-wrap gap-2 items-center bg-white dark:bg-gray-800 p-2.5 rounded-2xl border border-gray-150/80 dark:border-gray-800/80 shadow-sm">
@@ -1336,6 +1362,13 @@ export function Reports() {
 
       {/* TAB 3: DETALLE DE GASTOS */}
       {activeTab === 'expenses' && (
+        <div className="space-y-4">
+          {expError && (
+            <div className="flex items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive-muted px-4 py-3 text-sm font-semibold text-destructive">
+              <AlertTriangle size={16} />
+              Error al cargar gastos: {expError}
+            </div>
+          )}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-150/70 dark:border-gray-800/80 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/20 dark:bg-gray-800/40">
             <div>
@@ -1410,6 +1443,7 @@ export function Reports() {
               </table>
             </div>
           )}
+        </div>
         </div>
       )}
 

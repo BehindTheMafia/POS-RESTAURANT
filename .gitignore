@@ -9,3 +9,5 @@ dist-ssr
 .DS_Store
 *.log
 supabase/.temp
+
+testsprite_tests/tmp/

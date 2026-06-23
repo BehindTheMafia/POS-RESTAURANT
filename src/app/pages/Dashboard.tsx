@@ -6,6 +6,7 @@ import {
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAuthContext } from '../AuthContext';
 import { useRestaurant } from '../../hooks/useRestaurant';
+import { getLocalDateISO } from '../../lib/dates';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatCard } from '../components/ui/StatCard';
 import { Button } from '../components/ui/button';
@@ -14,8 +15,8 @@ export function Dashboard() {
   const { user } = useAuthContext();
   const { restaurant } = useRestaurant();
   const { stats, topProducts, inventoryLow, salesByPayment, expenses_total, loading, error, fetchDashboard } = useDashboard();
-  const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0]);
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const [dateFrom, setDateFrom] = useState(getLocalDateISO());
+  const [dateTo, setDateTo] = useState(getLocalDateISO());
 
   const currency = restaurant?.moneda ?? 'C$';
 

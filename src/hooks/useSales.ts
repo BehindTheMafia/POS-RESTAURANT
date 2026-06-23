@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, RESTAURANT_ID } from '../lib/supabase';
+import { getLocalDateISO, getLocalRangeBoundsISO, coerceDateISO } from '../lib/dates';
 import type { Tables } from '../lib/database.types';
 
 export type Sale = Tables<'sales'>;
@@ -27,9 +28,10 @@ export function useSales(dateFrom?: string, dateTo?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const today = new Date().toISOString().split('T')[0];
-  const from = dateFrom ?? today;
-  const to = dateTo ?? today;
+  const today = getLocalDateISO();
+  const from = coerceDateISO(dateFrom ?? today);
+  const to = coerceDateISO(dateTo ?? today);
+  const bounds = getLocalRangeBoundsISO(from, to);
 
   const fetchSales = useCallback(async () => {
     const [salesResult, pmResult, banksResult] = await Promise.all([
@@ -37,8 +39,8 @@ export function useSales(dateFrom?: string, dateTo?: string) {
         .from('sales')
         .select('*, payments(*), orders(mesa_id, mesero_id)')
         .eq('restaurant_id', RESTAURANT_ID)
-        .gte('fecha', `${from}T00:00:00`)
-        .lte('fecha', `${to}T23:59:59`)
+        .gte('fecha', bounds.start)
+        .lte('fecha', bounds.end)
         .order('fecha', { ascending: false }),
       supabase.from('payment_methods').select('*').eq('restaurant_id', RESTAURANT_ID).eq('activo', true),
       supabase.from('banks').select('*').eq('restaurant_id', RESTAURANT_ID).eq('activo', true),

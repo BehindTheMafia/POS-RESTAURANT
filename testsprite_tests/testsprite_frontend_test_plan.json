@@ -1,0 +1,879 @@
+[
+  {
+    "id": "TC001",
+    "title": "Prevent order access without a valid session",
+    "description": "An unauthenticated user cannot view or create orders and is blocked from protected order access.",
+    "category": "Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the order management page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify protected order access is blocked"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify order data is not displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Sign in and access protected operational data",
+    "description": "This verifies that an authorized user can sign in and view protected orders, tables, and products needed for daily restaurant operation.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the POS view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify orders data is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify table status data is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify product catalog data is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Create a new order from POS",
+    "description": "A waiter can create a new order with a table, waiter, and items and see it reflected in the order list.",
+    "category": "Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the order management page"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new order"
+      },
+      {
+        "type": "action",
+        "description": "Select a table for the order"
+      },
+      {
+        "type": "action",
+        "description": "Select a waiter for the order"
+      },
+      {
+        "type": "action",
+        "description": "Add one or more menu items to the order"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new order"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the created order is displayed in the order list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the order can proceed through the payment workflow"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Sign out and block access to products",
+    "description": "This verifies that a signed-in user can log out and then no longer access protected product data.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the sign-out control"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the products view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is blocked"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify product data is not displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Reject invalid sign in attempts",
+    "description": "This verifies that invalid credentials are rejected and access to protected areas is denied.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with invalid-user@example.com"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with invalid-password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an authentication error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify protected operational data is not displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Create a new order from the table map",
+    "description": "A waiter can use the tables view to pick an available table and assign it to a new order.",
+    "category": "Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the tables view"
+      },
+      {
+        "type": "action",
+        "description": "Open the order creation flow from the selected table"
+      },
+      {
+        "type": "action",
+        "description": "Select a waiter for the order"
+      },
+      {
+        "type": "action",
+        "description": "Add one or more menu items to the order"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new order"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the order is created from the selected table"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the table remains consistently assigned to the new order"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Show tables access is blocked without a session",
+    "description": "This verifies that opening the tables view without signing in does not reveal protected table data.",
+    "category": "Table Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /tables"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is blocked"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify table status data is not displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Take a new order and see it in the active orders list",
+    "description": "This verifies that an authorized user can create a new POS order with table, server, and products and then find it in the active orders list.",
+    "category": "POS Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the POS order view"
+      },
+      {
+        "type": "action",
+        "description": "Open the new order form"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid table"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid server"
+      },
+      {
+        "type": "action",
+        "description": "Add at least one valid product to the order"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new order appears in the active orders list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "View active and historical orders",
+    "description": "A cashier can open the order management view and see existing active and historical orders for review.",
+    "category": "Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the order management page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify orders are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify both active and historical order information is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "View table statuses for service assignment",
+    "description": "This verifies that an authorized user can open the tables view and see the current table states needed to assign a table to an order.",
+    "category": "Table Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the tables view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify table status data is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify multiple table states are shown"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "List products for daily operations",
+    "description": "This verifies that an authorized user can open the products view and see the current catalog for management and POS use.",
+    "category": "Product Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the products view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify product catalog data is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the catalog is not empty"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Create a product and see it in the catalog",
+    "description": "This verifies that a user with permission can create a new menu product and confirm it appears in the product list afterward.",
+    "category": "Product Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the products view"
+      },
+      {
+        "type": "action",
+        "description": "Open the new product form"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the product name with a unique valid name"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the remaining required product fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new product appears in the catalog"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Refresh orders after creation",
+    "description": "After creating an order, the updated order appears in subsequent order listings without leaving the management flow.",
+    "category": "Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the order management page"
+      },
+      {
+        "type": "action",
+        "description": "Create a new valid order"
+      },
+      {
+        "type": "action",
+        "description": "Refresh the order list within the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the newly created order is still displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the order list reflects the latest data"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Block order creation when required information is missing",
+    "description": "This verifies that an order cannot be created until the required table, server, and product information is provided.",
+    "category": "POS Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the POS order view"
+      },
+      {
+        "type": "action",
+        "description": "Open the new order form"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an order validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no new order is created"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC015",
+    "title": "Block order creation with invalid data",
+    "description": "A user cannot create an order with missing required information and the form shows validation feedback.",
+    "category": "Order Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the order management page"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new order"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new order without completing the required fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify order validation errors are visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no new order is added to the list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC016",
+    "title": "Show validation errors for incomplete product creation",
+    "description": "This verifies that submitting an incomplete product form is prevented and the catalog is not changed.",
+    "category": "Product Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the products view"
+      },
+      {
+        "type": "action",
+        "description": "Open the new product form"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the catalog remains unchanged"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC017",
+    "title": "View inventory items list and verify stock levels",
+    "description": "This verifies that an authorized user can log in, navigate to the inventory page, view the list of ingredients, and see any low stock warnings.",
+    "category": "Inventory Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the inventory view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the inventory page is displayed with ingredients listed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify stock warning indicators are displayed if items are below minimum"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Register manual adjustment of inventory stock",
+    "description": "This verifies that an authorized user can adjust the stock level of an inventory item and see the updated value in the list.",
+    "category": "Inventory Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the inventory view"
+      },
+      {
+        "type": "action",
+        "description": "Click the adjust stock button for the first active ingredient in the list"
+      },
+      {
+        "type": "action",
+        "description": "Enter a new valid stock level value in the adjustment input field"
+      },
+      {
+        "type": "action",
+        "description": "Save the adjustment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success notification is shown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated stock level is displayed in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC019",
+    "title": "View sales reports KPIs on dashboard",
+    "description": "This verifies that an authorized user can view the reports dashboard, showing KPI cards for daily/monthly sales, completed orders, and ticket averages.",
+    "category": "Sales Reports & Analytics",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the reports view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the reports dashboard page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify KPI cards for sales, completed orders, and ticket averages are visible with values"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC020",
+    "title": "Filter sales reports by preset date ranges",
+    "description": "This verifies that a user can filter the reports data using the date preset buttons like Hoy, and the data updates accordingly.",
+    "category": "Sales Reports & Analytics",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the reports view"
+      },
+      {
+        "type": "action",
+        "description": "Click the filter button for Hoy range"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the reports update to show only sales data for the current day"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC021",
+    "title": "Modify ticket configuration and tax percentage",
+    "description": "This verifies that an authorized user can navigate to the settings ticket tab, modify the IVA percentage and footer message, and save the settings successfully.",
+    "category": "System Settings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the settings view"
+      },
+      {
+        "type": "action",
+        "description": "Click the Ticket/IVA tab button"
+      },
+      {
+        "type": "action",
+        "description": "Update the IVA percentage input field value"
+      },
+      {
+        "type": "action",
+        "description": "Update the ticket footer message input field value"
+      },
+      {
+        "type": "action",
+        "description": "Submit the ticket settings form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success notification is shown"
+      }
+    ],
+    "priority": "Medium"
+  }
+]

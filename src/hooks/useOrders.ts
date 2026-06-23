@@ -65,10 +65,11 @@ export function useOrders(mesaId?: string) {
     if (err) throw err;
 
     if (!options?.skipTableStatus) {
-      await supabase
+      const { error: tableErr } = await supabase
         .from('tables_restaurant')
         .update({ estado: 'ocupada' })
-        .eq('id', mesaId);
+        .eq('id', mesaId)
+      if (tableErr) throw tableErr
     }
 
     return data.id;

@@ -45,6 +45,7 @@ export function Tables() {
     : physicalTables.filter(t => t.estado !== 'inactiva')
   const free = visibleTables.filter(t => t.estado === 'libre').length
   const occupied = visibleTables.filter(t => t.estado === 'ocupada').length
+  const dirty = visibleTables.filter(t => t.estado === 'sucia').length
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -111,6 +112,16 @@ export function Tables() {
   }
 
 
+  async function handleMarkClean(table: typeof tables[0], e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      await updateTable(table.id, { estado: 'libre' })
+      toast.success(`${table.nombre} marcada como libre`)
+    } catch (err: any) {
+      toast.error(err.message)
+    }
+  }
+
   function handleTableClick(tableId: string) {
     navigate(`/pos/${tableId}`)
   }
@@ -124,6 +135,12 @@ export function Tables() {
             <span className="text-success font-medium">{free} libres</span>
             {' · '}
             <span className="text-warning font-medium">{occupied} ocupadas</span>
+            {dirty > 0 && (
+              <>
+                {' · '}
+                <span className="text-orange-500 font-medium">{dirty} sucias</span>
+              </>
+            )}
             {' · '}
             {visibleTables.length} mesas
           </>
@@ -243,6 +260,7 @@ export function Tables() {
           {visibleTables.map((table, i) => {
             const isOccupied = table.estado === 'ocupada'
             const isInactive = table.estado === 'inactiva'
+            const isDirty = table.estado === 'sucia'
             return (
               <motion.button
                 key={table.id}
@@ -253,6 +271,7 @@ export function Tables() {
                 disabled={isInactive}
                 className={`relative flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all duration-200 hover:shadow-md active:scale-[0.98] min-h-[140px] ${
                   isInactive ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                  : isDirty ? 'border-orange-300 bg-orange-50 cursor-pointer hover:border-orange-400'
                   : isOccupied ? 'border-warning/40 bg-warning-muted cursor-pointer hover:border-warning/60'
                   : 'border-gray-200 bg-white hover:border-gray-300 cursor-pointer'
                 }`}
@@ -272,20 +291,42 @@ export function Tables() {
                 {isOccupied && (
                   <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-warning animate-pulse" />
                 )}
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${isOccupied ? 'bg-warning-muted' : 'bg-gray-100'}`}>
-                  <span className={`text-xl font-bold ${isOccupied ? 'text-warning' : 'text-gray-500'}`}>{table.numero}</span>
+                {isDirty && (
+                  <button
+                    onClick={e => handleMarkClean(table, e)}
+                    title="Marcar como limpia"
+                    className="absolute top-2.5 right-2.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-200 hover:bg-orange-200 cursor-pointer transition-colors"
+                  >
+                    Limpiar✓
+                  </button>
+                )}
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${
+                  isDirty ? 'bg-orange-100'
+                  : isOccupied ? 'bg-warning-muted'
+                  : 'bg-gray-100'
+                }`}>
+                  <span className={`text-xl font-bold ${
+                    isDirty ? 'text-orange-500'
+                    : isOccupied ? 'text-warning'
+                    : 'text-gray-500'
+                  }`}>{table.numero}</span>
                 </div>
-                <p className={`font-semibold text-sm ${isOccupied ? 'text-warning' : 'text-gray-700'}`}>{table.nombre}</p>
+                <p className={`font-semibold text-sm ${
+                  isDirty ? 'text-orange-600'
+                  : isOccupied ? 'text-warning'
+                  : 'text-gray-700'
+                }`}>{table.nombre}</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <Users size={11} className={isOccupied ? 'text-warning' : 'text-gray-400'} />
-                  <span className={`text-xs ${isOccupied ? 'text-warning' : 'text-gray-400'}`}>{table.capacidad} personas</span>
+                  <Users size={11} className={isDirty ? 'text-orange-400' : isOccupied ? 'text-warning' : 'text-gray-400'} />
+                  <span className={`text-xs ${isDirty ? 'text-orange-400' : isOccupied ? 'text-warning' : 'text-gray-400'}`}>{table.capacidad} personas</span>
                 </div>
                 <span className={`mt-2 text-xs px-2 py-0.5 rounded-full font-medium ${
                   isInactive ? 'bg-gray-200 text-gray-600'
+                  : isDirty ? 'bg-orange-100 text-orange-600'
                   : isOccupied ? 'bg-warning-muted text-warning'
                   : 'bg-success-muted text-success'
                 }`}>
-                  {isInactive ? 'Inactiva' : isOccupied ? 'Ocupada' : 'Libre'}
+                  {isInactive ? 'Inactiva' : isDirty ? 'Sucia' : isOccupied ? 'Ocupada' : 'Libre'}
                 </span>
               </motion.button>
             )

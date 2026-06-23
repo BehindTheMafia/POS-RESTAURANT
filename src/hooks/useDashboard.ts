@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase, RESTAURANT_ID } from '../lib/supabase';
+import { getLocalDateISO, getLocalRangeBoundsISO, coerceDateISO } from '../lib/dates';
 
 export type DashboardStats = {
   ventas_total: number;
@@ -67,9 +68,10 @@ export function useDashboard() {
   const fetchDashboard = useCallback(async (dateFrom?: string, dateTo?: string) => {
     setLoading(true);
     setError(null);
-    const today = new Date().toISOString().split('T')[0];
-    const from = dateFrom ?? today;
-    const to = dateTo ?? today;
+    const today = getLocalDateISO();
+    const from = coerceDateISO(dateFrom ?? today);
+    const to = coerceDateISO(dateTo ?? today);
+    const expenseBounds = getLocalRangeBoundsISO(from, to);
 
     try {
       const [statsResult, topResult, paymentResult, lowResult, expensesResult] = await Promise.all([
@@ -98,8 +100,8 @@ export function useDashboard() {
           .from('expenses')
           .select('monto')
           .eq('restaurant_id', RESTAURANT_ID)
-          .gte('fecha', `${from}T00:00:00`)
-          .lte('fecha', `${to}T23:59:59`),
+          .gte('fecha', expenseBounds.start)
+          .lte('fecha', expenseBounds.end),
       ]);
 
       const errors = [

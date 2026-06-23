@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, RESTAURANT_ID } from '../lib/supabase';
+import { getLocalDateISO, getLocalDayBoundsISO, getLocalRangeBoundsISO, coerceDateISO } from '../lib/dates';
 
 export interface SaleReportItem {
   id: string;
@@ -42,6 +43,8 @@ export interface SaleReportItem {
 }
 
 export function useSalesReports(dateFrom: string, dateTo: string) {
+  const safeFrom = coerceDateISO(dateFrom);
+  const safeTo = coerceDateISO(dateTo);
   const [sales, setSales] = useState<SaleReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,8 +62,11 @@ export function useSalesReports(dateFrom: string, dateTo: string) {
     setLoading(true);
     setError(null);
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const startOfMonthStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+      const todayStr = getLocalDateISO();
+      const startOfMonthStr = getLocalDateISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+      const rangeBounds = getLocalRangeBoundsISO(safeFrom, safeTo);
+      const todayBounds = getLocalDayBoundsISO(todayStr);
+      const monthBounds = getLocalRangeBoundsISO(startOfMonthStr, todayStr);
 
       // 1. Fetch sales with deep joins & absolute totals
       const [salesRes, salesTodayRes, salesMonthRes, cajerosRes, mesasRes, pmRes] = await Promise.all([
@@ -106,23 +112,23 @@ export function useSalesReports(dateFrom: string, dateTo: string) {
             )
           `)
           .eq('restaurant_id', RESTAURANT_ID)
-          .gte('fecha', `${dateFrom}T00:00:00`)
-          .lte('fecha', `${dateTo}T23:59:59`)
+          .gte('fecha', rangeBounds.start)
+          .lte('fecha', rangeBounds.end)
           .order('fecha', { ascending: false }),
         supabase
           .from('sales')
           .select('total')
           .eq('restaurant_id', RESTAURANT_ID)
           .eq('estado', 'completada')
-          .gte('fecha', `${todayStr}T00:00:00`)
-          .lte('fecha', `${todayStr}T23:59:59`),
+          .gte('fecha', todayBounds.start)
+          .lte('fecha', todayBounds.end),
         supabase
           .from('sales')
           .select('total')
           .eq('restaurant_id', RESTAURANT_ID)
           .eq('estado', 'completada')
-          .gte('fecha', `${startOfMonthStr}T00:00:00`)
-          .lte('fecha', `${todayStr}T23:59:59`),
+          .gte('fecha', monthBounds.start)
+          .lte('fecha', monthBounds.end),
         supabase.from('users').select('id, nombre').eq('restaurant_id', RESTAURANT_ID).order('nombre'),
         supabase.from('tables_restaurant').select('id, nombre, numero').eq('restaurant_id', RESTAURANT_ID).order('nombre'),
         supabase.from('payment_methods').select('id, nombre').eq('restaurant_id', RESTAURANT_ID).order('nombre')
@@ -146,7 +152,7 @@ export function useSalesReports(dateFrom: string, dateTo: string) {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo]);
+  }, [safeFrom, safeTo]);
 
   const cancelSale = useCallback(async (saleId: string, motivo: string, usuarioId: string) => {
     const { data, error: err } = await supabase.rpc('cancel_sale', {

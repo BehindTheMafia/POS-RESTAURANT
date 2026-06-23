@@ -3,10 +3,11 @@ import { motion } from 'motion/react'
 import { ScrollText, Search, RefreshCw, Filter, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useAudit } from '../../hooks/useAudit'
 import type { AuditLog } from '../../hooks/useAudit'
+import { getLocalDateISO } from '../../lib/dates'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Button } from '../components/ui/button'
 
-const today = () => new Date().toISOString().split('T')[0]
+const today = () => getLocalDateISO()
 
 export function Audit() {
   const { logs, loading, error, fetchLogs, page, totalPages, totalCount, pageSize } = useAudit(50)

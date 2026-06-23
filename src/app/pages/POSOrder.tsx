@@ -6,7 +6,7 @@ import {
   ArrowLeft, Plus, Minus, Trash2, ShoppingCart,
   Search, CheckCircle, LayoutGrid, Egg,
   Soup, CookingPot, ChefHat, GlassWater, Cake, UtensilsCrossed,
-  Edit, Printer
+  Edit, Printer, XCircle, MessageSquare
 } from 'lucide-react';
 import { useOrders } from '../../hooks/useOrders';
 import { useProducts } from '../../hooks/useProducts';
@@ -20,6 +20,8 @@ import { fetchSaleForPrint, printSaleTicket } from '../../lib/printTicket';
 import { isCounterTable } from '../../lib/pos';
 import { calcProductStock } from '../../lib/stock';
 import { CompleteSaleModal } from '../components/pos/CompleteSaleModal';
+import { ConfirmDialog, type ConfirmDialogState } from '../components/ui/ConfirmDialog';
+import { useCashRegister } from '../../hooks/useCashRegister';
 import type { PaymentLine } from '../../lib/payments';
 import {
   createEmptyPaymentLine,
@@ -33,10 +35,12 @@ export function POSOrder() {
   const { user } = useAuthContext();
   const { restaurant } = useRestaurant();
   const { tables } = useTables();
-  const { orders, createOrder, addOrderItem, updateOrderItemQty, removeOrderItem, refetch: refetchOrders } = useOrders(tableId);
+  const { orders, createOrder, addOrderItem, updateOrderItemQty, removeOrderItem, cancelOrder, refetch: refetchOrders } = useOrders(tableId);
   const { products, categories, recipes, loading: prodLoading } = useProducts();
   const { paymentMethods, banks, completeSale } = useSales();
   const { items: inventoryItems } = useInventory();
+  const { activeRegister } = useCashRegister();
+  const hasCashRegister = !!activeRegister;
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,11 +48,24 @@ export function POSOrder() {
   const [paymentLines, setPaymentLines] = useState<PaymentLine[]>([]);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [editingNoteItemId, setEditingNoteItemId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
   const [printing, setPrinting] = useState(false);
   const [saleResult, setSaleResult] = useState<{ sale_id: string; total: number } | null>(null);
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [cliente, setCliente] = useState('Consumidor Final');
   const [isCartMobileOpen, setIsCartMobileOpen] = useState(false);
+  const [dialog, setDialog] = useState<ConfirmDialogState | null>(null);
+  const [dialogLoading, setDialogLoading] = useState(false);
+
+  const handleDialogConfirm = async (input?: string) => {
+    if (!dialog) return;
+    setDialogLoading(true);
+    try { await dialog.onConfirm(input); }
+    catch (err: any) { toast.error(err.message); }
+    finally { setDialogLoading(false); setDialog(null); }
+  };
 
   // Optimistic cart overlay: applied immediately on user action,
   // cleared when the server refetch returns.
@@ -93,7 +110,7 @@ export function POSOrder() {
   const base = subtotal - descuento;
   const iva = Math.round(base * ivaPercent / 100 * 100) / 100;
   const total = base + iva;
-  const canComplete = cartItems.length > 0
+  const canComplete = cartItems.length > 0 && hasCashRegister
 
   const filteredProducts = useMemo(() =>
     products
@@ -357,10 +374,11 @@ export function POSOrder() {
           .eq('id', result.sale_id);
       }
 
+      // RF 4.4.5: mesa pasa a 'sucia' (no 'libre') para que el staff limpie antes de liberar
       if (tableId && !isCounter) {
         await supabase
           .from('tables_restaurant')
-          .update({ estado: 'libre' })
+          .update({ estado: 'sucia' })
           .eq('id', tableId);
       }
 
@@ -372,6 +390,41 @@ export function POSOrder() {
       toast.error(`Error al completar venta: ${err.message}`);
     } finally {
       setCompleting(false);
+    }
+  }
+
+  async function handleCancelOrder() {
+    if (!currentOrder || !tableId) return;
+    setDialog({
+      title: 'Anular pedido',
+      message: '¿Anular este pedido? Esta acción eliminará todos los ítems y no se puede deshacer.',
+      confirmLabel: 'Anular pedido',
+      variant: 'danger',
+      onConfirm: async () => {
+        setCancelling(true);
+        try {
+          await cancelOrder(currentOrder.id, tableId, { skipTableStatus: isCounter });
+          await refetchOrders();
+          toast.success('Pedido anulado');
+          navigate('/pos');
+        } catch (err: any) {
+          toast.error(`Error al anular: ${err.message}`);
+        } finally {
+          setCancelling(false);
+        }
+      },
+    });
+  }
+
+  async function handleSaveNote(itemId: string) {
+    // Actualiza notas en la BD directamente
+    try {
+      await supabase.from('order_items').update({ notas: noteText.trim() || null }).eq('id', itemId);
+      await refetchOrders();
+      setEditingNoteItemId(null);
+      setNoteText('');
+    } catch (err: any) {
+      toast.error(`Error al guardar nota: ${err.message}`);
     }
   }
 
@@ -663,9 +716,21 @@ export function POSOrder() {
                 Cajero: {user?.profile?.nombre ?? 'Sistema'}
               </p>
             </div>
-            <button onClick={() => navigate('/pos')} className="p-2 rounded-xl bg-gray-50 border border-gray-150 hover:bg-gray-100 transition-all text-gray-500 active:scale-95 cursor-pointer">
-              <Edit size={16} />
-            </button>
+            <div className="flex items-center gap-2">
+              {currentOrder && cartItems.length > 0 && (
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={cancelling}
+                  title="Anular pedido"
+                  className="p-2 rounded-xl bg-red-50 border border-red-200 hover:bg-red-100 transition-all text-red-500 active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <XCircle size={16} />
+                </button>
+              )}
+              <button onClick={() => navigate('/pos')} className="p-2 rounded-xl bg-gray-50 border border-gray-150 hover:bg-gray-100 transition-all text-gray-500 active:scale-95 cursor-pointer">
+                <Edit size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -721,9 +786,37 @@ export function POSOrder() {
                       <p className="text-sm font-bold text-gray-900 truncate leading-tight">
                         {product?.nombre ?? 'Producto'}
                       </p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
-                        {currency} {item.precio_unitario.toFixed(2)} c/u
-                      </p>
+                      {editingNoteItemId === item.id ? (
+                        <div className="flex items-center gap-1 mt-1">
+                          <input
+                            autoFocus
+                            type="text"
+                            value={noteText}
+                            onChange={e => setNoteText(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') handleSaveNote(item.id); if (e.key === 'Escape') { setEditingNoteItemId(null); setNoteText(''); } }}
+                            placeholder="Nota para cocina..."
+                            className="flex-1 text-[11px] border border-brand rounded-md px-1.5 py-0.5 outline-none bg-white"
+                          />
+                          <button onClick={() => handleSaveNote(item.id)} className="text-brand text-[10px] font-bold cursor-pointer">OK</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setEditingNoteItemId(item.id); setNoteText((item as any).notas ?? ''); }}
+                          className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand mt-0.5 cursor-pointer transition-colors"
+                        >
+                          <MessageSquare size={10} />
+                          {(item as any).notas ? (
+                            <span className="text-brand font-medium truncate max-w-[100px]">{(item as any).notas}</span>
+                          ) : (
+                            <span>+ nota</span>
+                          )}
+                        </button>
+                      )}
+                      {!editingNoteItemId || editingNoteItemId !== item.id ? (
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          {currency} {item.precio_unitario.toFixed(2)} c/u
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 shrink-0">
@@ -814,10 +907,17 @@ export function POSOrder() {
             </div>
           </div>
 
+          {!hasCashRegister && cartItems.length > 0 && (
+            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-center mt-2">
+              ⚠ Abre la caja antes de cobrar
+            </p>
+          )}
+
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleCompleteSale}
             disabled={completing || !canComplete}
+            title={!hasCashRegister ? 'Debes abrir la caja registradora primero' : undefined}
             className="w-full py-3.5 rounded-2xl bg-brand text-brand-foreground font-black text-sm disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-brand/10 mt-2"
           >
             {completing ? (
@@ -847,6 +947,17 @@ export function POSOrder() {
         banks={banks}
         exchangeRate={exchangeRate}
         baseCurrency={currency}
+      />
+
+      <ConfirmDialog
+        open={!!dialog}
+        loading={dialogLoading}
+        title={dialog?.title ?? ''}
+        message={dialog?.message ?? ''}
+        confirmLabel={dialog?.confirmLabel}
+        variant={dialog?.variant}
+        onConfirm={handleDialogConfirm}
+        onCancel={() => setDialog(null)}
       />
     </div>
   );
